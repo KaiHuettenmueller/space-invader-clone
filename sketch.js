@@ -2137,55 +2137,71 @@ function createGameOverForm() {
   // Entferne vorhandenes Formular, falls vorhanden
   removeGameOverForm();
   
+  // Weltraum-Farbpalette
+  const spaceColors = {
+    background: '#0A0E17',        // Dunkles Weltraum-Blau
+    accent1: '#3A1E7C',           // Dunkles Violett
+    accent2: '#1E3A7C',           // Dunkles Blau
+    highlight: '#4F8BFF',         // Helles Blau für Highlights
+    text: '#E6F0FF',              // Helles Blau-Weiß für Text
+    success: '#50EEBB',           // Türkis für Erfolge/Scores
+    warning: '#FF5A5A',           // Rot für Warnungen/Game Over
+    border: '#2A3A66',            // Blauer Rahmen
+    buttonHover: '#2A4A8F'        // Hover-Farbe für Buttons
+  };
+  
   // Erstelle einen Container für das Formular
   const formContainer = createDiv();
   formContainer.id('formContainer');
-  formContainer.style('background-color', '#222222');
-  formContainer.style('border-radius', '5px');
+  formContainer.style('background-color', spaceColors.background);
+  formContainer.style('border-radius', '8px');
   formContainer.style('padding', '20px');
   formContainer.style('width', '300px');
   formContainer.style('position', 'absolute');
   formContainer.style('left', `${width/2 - 150}px`);
   formContainer.style('top', '20px'); // Höher positionieren
   formContainer.style('z-index', '100');
-  formContainer.style('box-shadow', '0 4px 8px rgba(0, 0, 0, 0.5)');
+  formContainer.style('box-shadow', `0 0 20px ${spaceColors.accent1}80, 0 0 40px rgba(0, 0, 0, 0.8)`);
   formContainer.style('max-height', '560px'); // Maximale Höhe begrenzen
   formContainer.style('overflow-y', 'auto'); // Scrollbar hinzufügen, falls nötig
+  formContainer.style('border', `1px solid ${spaceColors.border}`);
   formContainer.parent('gameContainer');
   
-  // GAME OVER Titel
+  // GAME OVER Titel mit Weltraum-Effekt
   const gameOverTitle = createP('GAME OVER');
-  gameOverTitle.style('color', '#FF3B30');
+  gameOverTitle.style('color', spaceColors.warning);
   gameOverTitle.style('text-align', 'center');
   gameOverTitle.style('margin', '0 0 10px 0');
   gameOverTitle.style('font-weight', 'bold');
   gameOverTitle.style('font-size', '36px');
   gameOverTitle.style('font-family', 'Arial, sans-serif');
-  gameOverTitle.style('letter-spacing', '2px');
+  gameOverTitle.style('letter-spacing', '3px');
+  gameOverTitle.style('text-shadow', `0 0 10px ${spaceColors.warning}80, 0 0 20px ${spaceColors.warning}40`);
   gameOverTitle.parent(formContainer);
   
   // Score anzeigen
-  const scoreDisplay = createP(`FINAL SCORE: <span style="color: #4CD964;">${score}</span>`);
-  scoreDisplay.style('color', 'white');
+  const scoreDisplay = createP(`FINAL SCORE: <span style="color: ${spaceColors.success};">${score}</span>`);
+  scoreDisplay.style('color', spaceColors.text);
   scoreDisplay.style('text-align', 'center');
-  scoreDisplay.style('margin', '0 0 15px 0'); // Margin reduzieren
+  scoreDisplay.style('margin', '0 0 15px 0');
   scoreDisplay.style('font-size', '18px');
   scoreDisplay.style('font-family', 'Arial, sans-serif');
+  scoreDisplay.style('text-shadow', `0 0 5px ${spaceColors.highlight}60`);
   scoreDisplay.parent(formContainer);
   
-  // PROMINENTER JOBSUCHE-BEREICH (nach oben verschoben)
+  // JOBSUCHE-BEREICH mit Weltraum-Thema
   const jobContainer = createDiv();
-  jobContainer.style('background-color', '#8A2BE2');
-  jobContainer.style('border-radius', '5px');
+  jobContainer.style('background-color', spaceColors.accent2);
+  jobContainer.style('border-radius', '8px');
   jobContainer.style('padding', '15px');
   jobContainer.style('margin-bottom', '15px');
-  jobContainer.style('box-shadow', '0 2px 6px rgba(0, 0, 0, 0.3)');
-  jobContainer.style('border', '2px solid #9370DB');
+  jobContainer.style('box-shadow', `0 0 10px ${spaceColors.accent2}80`);
+  jobContainer.style('border', `1px solid ${spaceColors.border}`);
   jobContainer.parent(formContainer);
   
   // Jobsuche-Titel
-  const jobTitle = createP('🔍 OPEN FOR WORK 🔍');
-  jobTitle.style('color', 'white');
+  const jobTitle = createP('🚀 OPEN FOR WORK 🚀');
+  jobTitle.style('color', spaceColors.text);
   jobTitle.style('text-align', 'center');
   jobTitle.style('margin', '0 0 10px 0');
   jobTitle.style('font-weight', 'bold');
@@ -2195,7 +2211,7 @@ function createGameOverForm() {
   
   // Jobsuche-Text
   const jobText = createP('Ich suche eine Festanstellung! Wenn ihr von spannenden Möglichkeiten hört, freue ich mich über Tipps oder eine Weiterempfehlung');
-  jobText.style('color', 'white');
+  jobText.style('color', spaceColors.text);
   jobText.style('text-align', 'center');
   jobText.style('margin', '0 0 10px 0');
   jobText.style('font-size', '14px');
@@ -2206,8 +2222,8 @@ function createGameOverForm() {
   const jobLink = createButton('Kai Hüttenmüller CV');
   jobLink.style('width', '100%');
   jobLink.style('padding', '10px');
-  jobLink.style('background-color', 'white');
-  jobLink.style('color', '#8A2BE2');
+  jobLink.style('background-color', spaceColors.highlight);
+  jobLink.style('color', spaceColors.background);
   jobLink.style('border', 'none');
   jobLink.style('border-radius', '5px');
   jobLink.style('cursor', 'pointer');
@@ -2216,13 +2232,15 @@ function createGameOverForm() {
   jobLink.style('letter-spacing', '1px');
   jobLink.style('margin-top', '5px');
   jobLink.mouseOver(() => {
-    jobLink.style('background-color', '#f0f0f0');
+    jobLink.style('background-color', spaceColors.buttonHover);
     jobLink.style('transform', 'scale(1.02)');
     jobLink.style('transition', 'all 0.2s ease');
+    jobLink.style('box-shadow', `0 0 10px ${spaceColors.highlight}80`);
   });
   jobLink.mouseOut(() => {
-    jobLink.style('background-color', 'white');
+    jobLink.style('background-color', spaceColors.highlight);
     jobLink.style('transform', 'scale(1)');
+    jobLink.style('box-shadow', 'none');
   });
   jobLink.mousePressed(() => {
     window.open('https://kai.huettenmueller.de/', '_blank');
@@ -2236,50 +2254,51 @@ function createGameOverForm() {
   playerNameInput.style('padding', '10px');
   playerNameInput.style('margin-bottom', '10px');
   playerNameInput.style('border-radius', '5px');
-  playerNameInput.style('border', '1px solid #8A2BE2');
-  playerNameInput.style('background-color', '#333333');
-  playerNameInput.style('color', 'white');
+  playerNameInput.style('border', `1px solid ${spaceColors.border}`);
+  playerNameInput.style('background-color', spaceColors.background);
+  playerNameInput.style('color', spaceColors.text);
   playerNameInput.style('box-sizing', 'border-box');
   playerNameInput.style('font-family', 'Arial, sans-serif');
   playerNameInput.parent(formContainer);
-  
-  // E-Mail-Feld entfernt
   
   // Submit Button
   submitButton = createButton('SUBMIT SCORE');
   submitButton.style('width', '100%');
   submitButton.style('padding', '12px');
-  submitButton.style('background-color', '#8A2BE2');
-  submitButton.style('color', 'white');
+  submitButton.style('background-color', spaceColors.accent1);
+  submitButton.style('color', spaceColors.text);
   submitButton.style('border', 'none');
   submitButton.style('border-radius', '5px');
   submitButton.style('cursor', 'pointer');
   submitButton.style('font-weight', 'bold');
   submitButton.style('font-family', 'Arial, sans-serif');
   submitButton.style('letter-spacing', '1px');
-  submitButton.style('margin-bottom', '15px'); // Margin reduzieren
+  submitButton.style('margin-bottom', '15px');
   submitButton.mouseOver(() => {
-    submitButton.style('background-color', '#9370DB');
+    submitButton.style('background-color', spaceColors.buttonHover);
+    submitButton.style('box-shadow', `0 0 10px ${spaceColors.accent1}80`);
   });
   submitButton.mouseOut(() => {
-    submitButton.style('background-color', '#8A2BE2');
+    submitButton.style('background-color', spaceColors.accent1);
+    submitButton.style('box-shadow', 'none');
   });
   submitButton.parent(formContainer);
   
   // Highscores Titel
-  const highscoresTitle = createP('🏆 TOP SCORES 🏆');
-  highscoresTitle.style('color', 'gold');
+  const highscoresTitle = createP('✨ TOP SCORES ✨');
+  highscoresTitle.style('color', spaceColors.highlight);
   highscoresTitle.style('text-align', 'center');
-  highscoresTitle.style('margin', '5px 0'); // Margin reduzieren
+  highscoresTitle.style('margin', '5px 0');
   highscoresTitle.style('font-weight', 'bold');
   highscoresTitle.style('font-size', '18px');
   highscoresTitle.style('font-family', 'Arial, sans-serif');
+  highscoresTitle.style('text-shadow', `0 0 5px ${spaceColors.highlight}60`);
   highscoresTitle.parent(formContainer);
   
   // Highscores Liste
   const scoresList = createDiv();
   scoresList.style('width', '100%');
-  scoresList.style('margin-bottom', '10px'); // Margin reduzieren
+  scoresList.style('margin-bottom', '10px');
   scoresList.parent(formContainer);
   
   // Top 3 Scores anzeigen (Beispieldaten, falls keine echten Daten vorhanden)
@@ -2301,23 +2320,24 @@ function createGameOverForm() {
     const scoreEntry = createDiv();
     scoreEntry.style('display', 'flex');
     scoreEntry.style('justify-content', 'space-between');
-    scoreEntry.style('padding', '6px'); // Padding reduzieren
-    scoreEntry.style('margin-bottom', '4px'); // Margin reduzieren
-    scoreEntry.style('border-radius', '3px');
-    scoreEntry.style('background-color', '#333333');
-    scoreEntry.style('border', '1px solid gold');
+    scoreEntry.style('padding', '8px');
+    scoreEntry.style('margin-bottom', '4px');
+    scoreEntry.style('border-radius', '5px');
+    scoreEntry.style('background-color', `${spaceColors.accent2}80`);
+    scoreEntry.style('border', `1px solid ${spaceColors.border}`);
+    scoreEntry.style('box-shadow', `0 0 5px ${spaceColors.accent2}40`);
     scoreEntry.parent(scoresList);
     
     const rankName = createP(`#${i+1} ${playerName}`);
     rankName.style('margin', '0');
-    rankName.style('color', 'white');
+    rankName.style('color', spaceColors.text);
     rankName.style('font-family', 'Arial, sans-serif');
     rankName.style('font-weight', 'bold');
     rankName.parent(scoreEntry);
     
     const scoreText = createP(`${scoreValue}`);
     scoreText.style('margin', '0');
-    scoreText.style('color', '#4CD964');
+    scoreText.style('color', spaceColors.success);
     scoreText.style('font-family', 'Arial, sans-serif');
     scoreText.style('font-weight', 'bold');
     scoreText.parent(scoreEntry);
@@ -2325,32 +2345,33 @@ function createGameOverForm() {
   
   // Deine Position
   const positionTitle = createP('YOUR POSITION');
-  positionTitle.style('color', 'white');
+  positionTitle.style('color', spaceColors.text);
   positionTitle.style('text-align', 'center');
-  positionTitle.style('margin', '5px 0'); // Margin reduzieren
+  positionTitle.style('margin', '5px 0');
   positionTitle.style('font-family', 'Arial, sans-serif');
   positionTitle.parent(formContainer);
   
   const yourPosition = createDiv();
   yourPosition.style('display', 'flex');
   yourPosition.style('justify-content', 'space-between');
-  yourPosition.style('padding', '6px'); // Padding reduzieren
-  yourPosition.style('margin-bottom', '10px'); // Margin reduzieren
-  yourPosition.style('border-radius', '3px');
-  yourPosition.style('background-color', '#333333');
-  yourPosition.style('border', '1px solid #007AFF');
+  yourPosition.style('padding', '8px');
+  yourPosition.style('margin-bottom', '15px');
+  yourPosition.style('border-radius', '5px');
+  yourPosition.style('background-color', `${spaceColors.accent1}80`);
+  yourPosition.style('border', `1px solid ${spaceColors.border}`);
+  yourPosition.style('box-shadow', `0 0 10px ${spaceColors.accent1}40`);
   yourPosition.parent(formContainer);
   
   const yourRank = createP(`#5 YOU`);
   yourRank.style('margin', '0');
-  yourRank.style('color', 'white');
+  yourRank.style('color', spaceColors.text);
   yourRank.style('font-family', 'Arial, sans-serif');
   yourRank.style('font-weight', 'bold');
   yourRank.parent(yourPosition);
   
   const yourScore = createP(`${score}`);
   yourScore.style('margin', '0');
-  yourScore.style('color', '#4CD964');
+  yourScore.style('color', spaceColors.success);
   yourScore.style('font-family', 'Arial, sans-serif');
   yourScore.style('font-weight', 'bold');
   yourScore.parent(yourPosition);
@@ -2358,21 +2379,23 @@ function createGameOverForm() {
   // Play Again Button
   const playAgainButton = createButton('PLAY AGAIN');
   playAgainButton.style('width', '100%');
-  playAgainButton.style('padding', '10px'); // Padding reduzieren
-  playAgainButton.style('background-color', '#FF3B30');
-  playAgainButton.style('color', 'white');
+  playAgainButton.style('padding', '12px');
+  playAgainButton.style('background-color', spaceColors.warning);
+  playAgainButton.style('color', spaceColors.text);
   playAgainButton.style('border', 'none');
   playAgainButton.style('border-radius', '5px');
   playAgainButton.style('cursor', 'pointer');
   playAgainButton.style('font-weight', 'bold');
   playAgainButton.style('font-family', 'Arial, sans-serif');
   playAgainButton.style('letter-spacing', '1px');
-  playAgainButton.style('margin-bottom', '8px'); // Margin reduzieren
+  playAgainButton.style('margin-bottom', '10px');
   playAgainButton.mouseOver(() => {
-    playAgainButton.style('background-color', '#FF6B60');
+    playAgainButton.style('background-color', '#FF7070');
+    playAgainButton.style('box-shadow', `0 0 10px ${spaceColors.warning}80`);
   });
   playAgainButton.mouseOut(() => {
-    playAgainButton.style('background-color', '#FF3B30');
+    playAgainButton.style('background-color', spaceColors.warning);
+    playAgainButton.style('box-shadow', 'none');
   });
   playAgainButton.mousePressed(() => {
     removeGameOverForm();
@@ -2384,8 +2407,8 @@ function createGameOverForm() {
   const leaderboardsButton = createButton('LEADERBOARDS');
   leaderboardsButton.style('width', '100%');
   leaderboardsButton.style('padding', '12px');
-  leaderboardsButton.style('background-color', 'white');
-  leaderboardsButton.style('color', '#333333');
+  leaderboardsButton.style('background-color', spaceColors.highlight);
+  leaderboardsButton.style('color', spaceColors.background);
   leaderboardsButton.style('border', 'none');
   leaderboardsButton.style('border-radius', '5px');
   leaderboardsButton.style('cursor', 'pointer');
@@ -2393,10 +2416,12 @@ function createGameOverForm() {
   leaderboardsButton.style('font-family', 'Arial, sans-serif');
   leaderboardsButton.style('letter-spacing', '1px');
   leaderboardsButton.mouseOver(() => {
-    leaderboardsButton.style('background-color', '#f0f0f0');
+    leaderboardsButton.style('background-color', spaceColors.buttonHover);
+    leaderboardsButton.style('box-shadow', `0 0 10px ${spaceColors.highlight}80`);
   });
   leaderboardsButton.mouseOut(() => {
-    leaderboardsButton.style('background-color', 'white');
+    leaderboardsButton.style('background-color', spaceColors.highlight);
+    leaderboardsButton.style('box-shadow', 'none');
   });
   leaderboardsButton.mousePressed(() => {
     removeGameOverForm();
@@ -2472,15 +2497,62 @@ function showSuccessMessage() {
   // Finde den formContainer
   const formContainer = select('#formContainer');
   if (formContainer) {
+    // Weltraum-Farbpalette (gleiche wie in createGameOverForm)
+    const spaceColors = {
+      background: '#0A0E17',
+      accent1: '#3A1E7C',
+      accent2: '#1E3A7C',
+      highlight: '#4F8BFF',
+      text: '#E6F0FF',
+      success: '#50EEBB',
+      warning: '#FF5A5A',
+      border: '#2A3A66',
+      buttonHover: '#2A4A8F'
+    };
+    
+    // Container für die Erfolgsmeldung
+    const successContainer = createDiv();
+    successContainer.style('background-color', `${spaceColors.accent2}80`);
+    successContainer.style('border-radius', '8px');
+    successContainer.style('padding', '15px');
+    successContainer.style('margin', '10px 0');
+    successContainer.style('box-shadow', `0 0 15px ${spaceColors.success}60`);
+    successContainer.style('border', `1px solid ${spaceColors.success}`);
+    successContainer.parent(formContainer);
+    
     // Erfolgsmeldung hinzufügen
-    const successMessage = createP('Score successfully submitted! Thanks for playing!');
-    successMessage.style('color', '#4CD964');
+    const successMessage = createP('Score successfully submitted!');
+    successMessage.style('color', spaceColors.success);
     successMessage.style('text-align', 'center');
-    successMessage.style('margin', '20px 0');
+    successMessage.style('margin', '0 0 10px 0');
     successMessage.style('font-size', '18px');
     successMessage.style('font-weight', 'bold');
     successMessage.style('font-family', 'Arial, sans-serif');
-    successMessage.parent(formContainer);
+    successMessage.style('text-shadow', `0 0 5px ${spaceColors.success}60`);
+    successMessage.parent(successContainer);
+    
+    // Danke-Nachricht
+    const thanksMessage = createP('Thanks for playing!');
+    thanksMessage.style('color', spaceColors.text);
+    thanksMessage.style('text-align', 'center');
+    thanksMessage.style('margin', '0');
+    thanksMessage.style('font-size', '16px');
+    thanksMessage.style('font-family', 'Arial, sans-serif');
+    thanksMessage.parent(successContainer);
+    
+    // Füge ein paar Sterne als Dekoration hinzu
+    for (let i = 0; i < 3; i++) {
+      const star = createP('✨');
+      star.style('position', 'absolute');
+      star.style('font-size', '24px');
+      star.style('color', spaceColors.highlight);
+      star.style('opacity', '0.8');
+      star.style('top', `${Math.random() * 100}%`);
+      star.style('left', `${Math.random() * 80 + 10}%`);
+      star.style('transform', 'rotate(' + Math.random() * 360 + 'deg)');
+      star.style('text-shadow', `0 0 5px ${spaceColors.highlight}`);
+      star.parent(successContainer);
+    }
   }
 }
 
