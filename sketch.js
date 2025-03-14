@@ -2317,7 +2317,7 @@ function submitPlayerInfo() {
     }
     
     // Aktualisiere den Spielernamen in Supabase
-    if (window.SupabaseService && window.SupabaseService.isInitialized()) {
+    if (window.SupabaseService && window.SupabaseService.isSupabaseInitialized()) {
       window.SupabaseService.saveHighScore(name, score, level, email)
         .then(result => {
           console.log('Spielerinformationen aktualisiert:', result);
