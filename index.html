@@ -9,20 +9,18 @@
   <script>
     // CORS-Proxy-URL (falls benötigt)
     const CORS_PROXY = "https://corsproxy.io/?";
+    
+    // Globale Variablen für Supabase
+    const SUPABASE_URL = 'https://dwmchnkwymyyssldbcky.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR3bWNobmt3eW15eXNzbGRiY2t5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE5NDk5MzYsImV4cCI6MjA1NzUyNTkzNn0.llOZSlp--MV5PhbkFGG2eVuO2eFUh5taKqibRpHzhVc';
+    let supabaseClient = null;
   </script>
   
-  <!-- Supabase direkt einbinden -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <!-- Supabase direkt einbinden (neuere Version) -->
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   
   <!-- Globale Supabase-Variablen -->
   <script>
-    // Supabase-Konfiguration
-    const SUPABASE_URL = 'https://dwmchnkwymyyssldbcky.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR3bWNobmt3eW15eXNzbGRiY2t5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE5NDk5MzYsImV4cCI6MjA1NzUyNTkzNn0.llOZSlp--MV5PhbkFGG2eVuO2eFUh5taKqibRpHzhVc';
-    
-    // Supabase-Client initialisieren
-    let supabaseClient;
-    
     // Funktion zur Initialisierung des Supabase-Clients
     function initSupabaseClient() {
       console.log('Initializing Supabase client...');
@@ -53,7 +51,7 @@
         console.error('Supabase library not loaded!');
         // Versuche, die Bibliothek erneut zu laden
         const script = document.createElement('script');
-        script.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js";
+        script.src = "https://unpkg.com/@supabase/supabase-js@2";
         script.onload = function() {
           console.log('Supabase library loaded dynamically!');
           initSupabaseClient(); // Versuche erneut zu initialisieren
@@ -92,7 +90,8 @@
     // Warte, bis das Dokument vollständig geladen ist
     document.addEventListener('DOMContentLoaded', function() {
       console.log('DOM fully loaded, initializing Supabase...');
-      initSupabaseClient();
+      // Verzögerung hinzufügen, um sicherzustellen, dass die Bibliothek geladen ist
+      setTimeout(initSupabaseClient, 500);
     });
     
     // Zusätzlich beim Fenster-Load-Event versuchen
@@ -101,7 +100,8 @@
       
       // Wenn der Client noch nicht initialisiert wurde, versuche es erneut
       if (!window.supabaseClient) {
-        initSupabaseClient();
+        // Verzögerung hinzufügen, um sicherzustellen, dass die Bibliothek geladen ist
+        setTimeout(initSupabaseClient, 500);
       }
     };
   </script>
@@ -115,6 +115,8 @@
       background-color: black;
     }
   </style>
+  <!-- Favicon hinzufügen, um 404-Fehler zu vermeiden -->
+  <link rel="icon" href="data:,">
 </head>
 <body>
 </body>

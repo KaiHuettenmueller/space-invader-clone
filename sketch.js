@@ -378,9 +378,7 @@ class Player {
         } else if (typeof supabase !== 'undefined') {
           // Versuche, den Client direkt zu erstellen, falls die Bibliothek geladen ist
           try {
-            const SUPABASE_URL = 'https://dwmchnkwymyyssldbcky.supabase.co';
-            const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR3bWNobmt3eW15eXNzbGRiY2t5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE5NDk5MzYsImV4cCI6MjA1NzUyNTkzNn0.llOZSlp--MV5PhbkFGG2eVuO2eFUh5taKqibRpHzhVc';
-            
+            // Verwende die globalen Variablen aus index.html
             supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
               auth: {
                 autoRefreshToken: true,
@@ -393,7 +391,16 @@ class Player {
           } catch (error) {
             console.error('Error creating Supabase client in sketch.js:', error);
             onlineLeaderboardStatus = "Fehler bei Supabase-Initialisierung";
+            
+            // Versuche es später noch einmal
+            setTimeout(initSupabase, 2000);
           }
+        } else {
+          console.error('Supabase library still not available after delay');
+          onlineLeaderboardStatus = "Supabase-Bibliothek nicht verfügbar";
+          
+          // Versuche es später noch einmal
+          setTimeout(initSupabase, 2000);
         }
       }, 1000);
     }
