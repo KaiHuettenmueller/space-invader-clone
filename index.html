@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Kai's Pixel Art Space Shooter</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.js"></script>
+  <!-- Supabase v2 mit ESM-Import -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script>
+    // Stellen Sie sicher, dass die Supabase-Bibliothek geladen ist
+    window.onload = function() {
+      if (typeof supabase !== 'undefined') {
+        console.log('Supabase library loaded successfully');
+        window.createClient = supabase.createClient;
+      } else {
+        console.error('Supabase library not loaded');
+      }
+    };
+  </script>
+  <script src="sketch.js"></script>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background-color: black;
+    }
+  </style>
+</head>
+<body>
+</body>
+</html>

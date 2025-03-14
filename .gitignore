@@ -1,0 +1,32 @@
+# Betriebssystem-Dateien
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor-Dateien
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Temporäre Dateien
+*.tmp
+*.log
+*.bak
+
+# Node.js (falls verwendet)
+node_modules/
+npm-debug.log
+yarn-error.log
+package-lock.json
+yarn.lock
+
+# Umgebungsvariablen (falls verwendet)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Persönliche Konfigurationsdateien
+config.js 
