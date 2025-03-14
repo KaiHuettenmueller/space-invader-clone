@@ -2189,64 +2189,6 @@ function createGameOverForm() {
   scoreDisplay.style('text-shadow', `0 0 5px ${spaceColors.highlight}60`);
   scoreDisplay.parent(formContainer);
   
-  // JOBSUCHE-BEREICH mit Weltraum-Thema
-  const jobContainer = createDiv();
-  jobContainer.style('background-color', spaceColors.accent2);
-  jobContainer.style('border-radius', '8px');
-  jobContainer.style('padding', '15px');
-  jobContainer.style('margin-bottom', '15px');
-  jobContainer.style('box-shadow', `0 0 10px ${spaceColors.accent2}80`);
-  jobContainer.style('border', `1px solid ${spaceColors.border}`);
-  jobContainer.parent(formContainer);
-  
-  // Jobsuche-Titel
-  const jobTitle = createP('🚀 OPEN FOR WORK 🚀');
-  jobTitle.style('color', spaceColors.text);
-  jobTitle.style('text-align', 'center');
-  jobTitle.style('margin', '0 0 10px 0');
-  jobTitle.style('font-weight', 'bold');
-  jobTitle.style('font-size', '16px');
-  jobTitle.style('font-family', 'Arial, sans-serif');
-  jobTitle.parent(jobContainer);
-  
-  // Jobsuche-Text
-  const jobText = createP('Ich suche eine Festanstellung! Wenn ihr von spannenden Möglichkeiten hört, freue ich mich über Tipps oder eine Weiterempfehlung');
-  jobText.style('color', spaceColors.text);
-  jobText.style('text-align', 'center');
-  jobText.style('margin', '0 0 10px 0');
-  jobText.style('font-size', '14px');
-  jobText.style('font-family', 'Arial, sans-serif');
-  jobText.parent(jobContainer);
-  
-  // Jobsuche-Link
-  const jobLink = createButton('Kai Hüttenmüller CV');
-  jobLink.style('width', '100%');
-  jobLink.style('padding', '10px');
-  jobLink.style('background-color', spaceColors.highlight);
-  jobLink.style('color', spaceColors.background);
-  jobLink.style('border', 'none');
-  jobLink.style('border-radius', '5px');
-  jobLink.style('cursor', 'pointer');
-  jobLink.style('font-weight', 'bold');
-  jobLink.style('font-family', 'Arial, sans-serif');
-  jobLink.style('letter-spacing', '1px');
-  jobLink.style('margin-top', '5px');
-  jobLink.mouseOver(() => {
-    jobLink.style('background-color', spaceColors.buttonHover);
-    jobLink.style('transform', 'scale(1.02)');
-    jobLink.style('transition', 'all 0.2s ease');
-    jobLink.style('box-shadow', `0 0 10px ${spaceColors.highlight}80`);
-  });
-  jobLink.mouseOut(() => {
-    jobLink.style('background-color', spaceColors.highlight);
-    jobLink.style('transform', 'scale(1)');
-    jobLink.style('box-shadow', 'none');
-  });
-  jobLink.mousePressed(() => {
-    window.open('https://kai.huettenmueller.de/', '_blank');
-  });
-  jobLink.parent(jobContainer);
-  
   // Erstelle Eingabefelder
   playerNameInput = createInput(window.localStorage.getItem('playerName') || '');
   playerNameInput.attribute('placeholder', 'Enter your name');
@@ -2415,6 +2357,7 @@ function createGameOverForm() {
   leaderboardsButton.style('font-weight', 'bold');
   leaderboardsButton.style('font-family', 'Arial, sans-serif');
   leaderboardsButton.style('letter-spacing', '1px');
+  leaderboardsButton.style('margin-bottom', '15px');
   leaderboardsButton.mouseOver(() => {
     leaderboardsButton.style('background-color', spaceColors.buttonHover);
     leaderboardsButton.style('box-shadow', `0 0 10px ${spaceColors.highlight}80`);
@@ -2429,6 +2372,64 @@ function createGameOverForm() {
     fetchLeaderboard(); // Nur Daten laden, kein direktes Zeichnen mehr
   });
   leaderboardsButton.parent(formContainer);
+  
+  // JOBSUCHE-BEREICH mit Weltraum-Thema (nach unten verschoben)
+  const jobContainer = createDiv();
+  jobContainer.style('background-color', spaceColors.accent2);
+  jobContainer.style('border-radius', '8px');
+  jobContainer.style('padding', '15px');
+  jobContainer.style('margin-top', '5px');
+  jobContainer.style('box-shadow', `0 0 10px ${spaceColors.accent2}80`);
+  jobContainer.style('border', `1px solid ${spaceColors.border}`);
+  jobContainer.parent(formContainer);
+  
+  // Jobsuche-Titel
+  const jobTitle = createP('🚀 LOOKING FOR GROUP 🚀');
+  jobTitle.style('color', spaceColors.text);
+  jobTitle.style('text-align', 'center');
+  jobTitle.style('margin', '0 0 10px 0');
+  jobTitle.style('font-weight', 'bold');
+  jobTitle.style('font-size', '16px');
+  jobTitle.style('font-family', 'Arial, sans-serif');
+  jobTitle.parent(jobContainer);
+  
+  // Jobsuche-Text
+  const jobText = createP('Ich suche eine berufliche Herausforderung! Wenn ihr von spannenden Möglichkeiten hört, freue ich mich über Tipps oder eine Weiterempfehlung');
+  jobText.style('color', spaceColors.text);
+  jobText.style('text-align', 'center');
+  jobText.style('margin', '0 0 10px 0');
+  jobText.style('font-size', '14px');
+  jobText.style('font-family', 'Arial, sans-serif');
+  jobText.parent(jobContainer);
+  
+  // Jobsuche-Link
+  const jobLink = createButton('Kai Hüttenmüller CV');
+  jobLink.style('width', '100%');
+  jobLink.style('padding', '10px');
+  jobLink.style('background-color', spaceColors.highlight);
+  jobLink.style('color', spaceColors.background);
+  jobLink.style('border', 'none');
+  jobLink.style('border-radius', '5px');
+  jobLink.style('cursor', 'pointer');
+  jobLink.style('font-weight', 'bold');
+  jobLink.style('font-family', 'Arial, sans-serif');
+  jobLink.style('letter-spacing', '1px');
+  jobLink.style('margin-top', '5px');
+  jobLink.mouseOver(() => {
+    jobLink.style('background-color', spaceColors.buttonHover);
+    jobLink.style('transform', 'scale(1.02)');
+    jobLink.style('transition', 'all 0.2s ease');
+    jobLink.style('box-shadow', `0 0 10px ${spaceColors.highlight}80`);
+  });
+  jobLink.mouseOut(() => {
+    jobLink.style('background-color', spaceColors.highlight);
+    jobLink.style('transform', 'scale(1)');
+    jobLink.style('box-shadow', 'none');
+  });
+  jobLink.mousePressed(() => {
+    window.open('https://kai.huettenmueller.de/', '_blank');
+  });
+  jobLink.parent(jobContainer);
   
   // Event-Handler für den Button
   submitButton.mousePressed(submitPlayerInfo);
