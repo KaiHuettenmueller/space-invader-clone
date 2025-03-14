@@ -2415,6 +2415,9 @@ function createGameOverForm() {
   jobLink.style('font-family', 'Arial, sans-serif');
   jobLink.style('letter-spacing', '1px');
   jobLink.style('margin-top', '5px');
+  // Entferne alle möglichen Emojis oder Symbole
+  jobLink.style('position', 'relative'); // Stelle sicher, dass keine absolut positionierten Elemente darüber liegen
+  jobLink.style('overflow', 'hidden'); // Verstecke alles, was über den Button hinausragt
   jobLink.mouseOver(() => {
     jobLink.style('background-color', spaceColors.buttonHover);
     jobLink.style('transform', 'scale(1.02)');
@@ -2541,18 +2544,26 @@ function showSuccessMessage() {
     thanksMessage.style('font-family', 'Arial, sans-serif');
     thanksMessage.parent(successContainer);
     
-    // Füge ein paar Sterne als Dekoration hinzu
+    // Füge ein paar Sterne als Dekoration hinzu, aber nur innerhalb des Success-Containers
+    const starContainer = createDiv();
+    starContainer.style('position', 'relative');
+    starContainer.style('width', '100%');
+    starContainer.style('height', '0');
+    starContainer.style('overflow', 'visible');
+    starContainer.parent(successContainer);
+    
     for (let i = 0; i < 3; i++) {
       const star = createP('✨');
       star.style('position', 'absolute');
       star.style('font-size', '24px');
       star.style('color', spaceColors.highlight);
       star.style('opacity', '0.8');
-      star.style('top', `${Math.random() * 100}%`);
+      star.style('top', `${Math.random() * 100 - 50}px`); // Positioniere Sterne nur innerhalb des Containers
       star.style('left', `${Math.random() * 80 + 10}%`);
       star.style('transform', 'rotate(' + Math.random() * 360 + 'deg)');
       star.style('text-shadow', `0 0 5px ${spaceColors.highlight}`);
-      star.parent(successContainer);
+      star.style('z-index', '1'); // Niedrigerer z-index, damit sie nicht über anderen Elementen liegen
+      star.parent(starContainer);
     }
   }
 }
