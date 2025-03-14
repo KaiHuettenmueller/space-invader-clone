@@ -1,9 +1,7 @@
 // Player class: represents the player's spaceship
 
-// Supabase configuration - Ersetze diese mit deinen eigenen Werten
-const SUPABASE_URL = 'https://dwmchnkwymyyssldbcky.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR3bWNobmt3eW15eXNzbGRiY2t5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE5NDk5MzYsImV4cCI6MjA1NzUyNTkzNn0.llOZSlp--MV5PhbkFGG2eVuO2eFUh5taKqibRpHzhVc';
-let supabase;
+// Supabase-Variablen
+let supabase; // Der Supabase-Client
 
 class Player {
     constructor(x, y) {
@@ -347,91 +345,145 @@ class Player {
     textFont('monospace');
     textSize(16);
     
-    // Initialize Supabase client
+    console.log('Game setup started');
+    
+    // Supabase-Client aus der globalen Variable holen
     initSupabase();
     
     // Initialize game entities
     resetGame();               // custom function to initialize/restart the game
   }
   
-  // Funktion zum Abrufen der globalen Highscores aus Supabase
-  function fetchGlobalHighScores() {
-    if (supabase) {
-      onlineLeaderboardStatus = "Lade Online-Bestenliste...";
-      supabase
-        .from('leaderboard')
-        .select('*')
-        .order('score', { ascending: false })
-        .limit(10)
-        .then(response => {
-          if (response.data && response.data.length > 0) {
-            globalHighScores = response.data;
-            onlineLeaderboardStatus = "";
-            console.log('Global high scores fetched:', globalHighScores);
-          } else {
-            onlineLeaderboardStatus = "Keine Online-Scores gefunden";
-            console.log('No global high scores found');
-          }
-        })
-        .catch(error => {
-          onlineLeaderboardStatus = "Fehler beim Laden der Online-Bestenliste: " + error.message;
-          console.error('Error fetching global high scores:', error);
-        });
+  // Einfache Funktion zur Initialisierung von Supabase
+  function initSupabase() {
+    console.log('Initializing Supabase...');
+    
+    // Prüfen, ob der Supabase-Client in der globalen Variable verfügbar ist
+    if (window.supabaseClient) {
+      console.log('Using Supabase client from global variable');
+      supabase = window.supabaseClient;
+      
+      // Verbindung testen
+      testConnection();
     } else {
-      onlineLeaderboardStatus = "Keine Verbindung zur Datenbank";
+      console.error('Supabase client not available in global variable');
+      onlineLeaderboardStatus = "Supabase nicht verfügbar";
     }
   }
   
-  // Separate function to initialize Supabase
-  function initSupabase() {
-    try {
-      if (typeof window.createClient === 'function') {
-        console.log('Creating Supabase client...');
-        
-        // Erweiterte Optionen für den Supabase-Client
-        const options = {
-          auth: {
-            autoRefreshToken: true,
-            persistSession: true
-          },
-          global: {
-            headers: {
-              'X-Client-Info': 'space-invader-game'
-            }
-          }
-        };
-        
-        supabase = window.createClient(SUPABASE_URL, SUPABASE_KEY, options);
-        console.log('Supabase client initialized');
-        
-        // Test the connection
-        supabase
-          .from('leaderboard')
-          .select('count', { count: 'exact', head: true })
-          .then(response => {
-            console.log('Supabase connection test successful');
-            // Lade die globalen Highscores beim Start
-            fetchGlobalHighScores();
-          })
-          .catch(error => {
-            console.error('Supabase connection test failed:', error);
-            onlineLeaderboardStatus = "Verbindungsfehler: " + error.message;
-          });
-      } else {
-        console.error('createClient function not available');
-        onlineLeaderboardStatus = "Supabase nicht verfügbar";
-        
-        // Retry after a short delay (the library might still be loading)
-        setTimeout(initSupabase, 1000);
-      }
-    } catch (error) {
-      console.error('Error initializing Supabase client:', error);
-      onlineLeaderboardStatus = "Fehler bei der Verbindung: " + error.message;
+  // Funktion zum Testen der Verbindung
+  function testConnection() {
+    if (!supabase) {
+      console.error('Cannot test connection: Supabase client not initialized');
+      onlineLeaderboardStatus = "Supabase nicht initialisiert";
+      return;
     }
+    
+    console.log('Testing Supabase connection...');
+    onlineLeaderboardStatus = "Teste Verbindung...";
+    
+    // Einfacher Test: Versuche, die Anzahl der Einträge in der Tabelle zu zählen
+    supabase
+      .from('leaderboard')
+      .select('count', { count: 'exact', head: true })
+      .then(response => {
+        console.log('Connection test successful:', response);
+        onlineLeaderboardStatus = "Verbindung erfolgreich!";
+        
+        // Lade die Highscores
+        fetchGlobalHighScores();
+      })
+      .catch(error => {
+        console.error('Connection test failed:', error);
+        onlineLeaderboardStatus = "Verbindungsfehler: " + error.message;
+      });
+  }
+  
+  // Funktion zum Abrufen der globalen Highscores
+  function fetchGlobalHighScores() {
+    if (!supabase) {
+      console.error('Cannot fetch global high scores: Supabase client not initialized');
+      onlineLeaderboardStatus = "Supabase nicht initialisiert";
+      return;
+    }
+    
+    console.log('Fetching global high scores...');
+    onlineLeaderboardStatus = "Lade Online-Bestenliste...";
+    
+    supabase
+      .from('leaderboard')
+      .select('*')
+      .order('score', { ascending: false })
+      .limit(10)
+      .then(response => {
+        if (response.error) {
+          throw response.error;
+        }
+        
+        if (response.data && response.data.length > 0) {
+          globalHighScores = response.data;
+          onlineLeaderboardStatus = "";
+          console.log('Global high scores fetched:', globalHighScores);
+        } else {
+          onlineLeaderboardStatus = "Keine Online-Scores gefunden";
+          console.log('No global high scores found');
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching global high scores:', error);
+        
+        // Detaillierte Fehleranalyse
+        if (error.code === 'PGRST301') {
+          onlineLeaderboardStatus = "Tabelle nicht gefunden";
+        } else if (error.message && error.message.includes('CORS')) {
+          onlineLeaderboardStatus = "CORS-Fehler: Zugriff verweigert";
+        } else if (error.message && error.message.includes('network')) {
+          onlineLeaderboardStatus = "Netzwerkfehler";
+        } else {
+          onlineLeaderboardStatus = "Fehler beim Laden: " + (error.message || "Unbekannter Fehler");
+        }
+        
+        // Leere die globalHighScores, damit keine alten Daten angezeigt werden
+        globalHighScores = [];
+      });
+  }
+  
+  // Funktion zum Überprüfen der CORS-Einstellungen
+  function checkCorsSettings() {
+    console.log('Checking CORS settings...');
+    
+    // Einfache Anfrage an die Supabase-API senden
+    fetch(SUPABASE_URL + '/rest/v1/leaderboard?select=count', {
+      method: 'GET',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Content-Type': 'application/json'
+      }
+    })
+    .then(response => {
+      console.log('CORS check response:', response);
+      if (response.ok) {
+        console.log('CORS settings are correct');
+        return response.json();
+      } else {
+        throw new Error('CORS check failed with status: ' + response.status);
+      }
+    })
+    .then(data => {
+      console.log('CORS check data:', data);
+    })
+    .catch(error => {
+      console.error('CORS check error:', error);
+      if (error.message.includes('NetworkError') || error.message.includes('Failed to fetch')) {
+        console.error('This is likely a CORS issue. Make sure your Supabase project allows requests from: ' + window.location.origin);
+      }
+    });
   }
   
   // Initialize or reset the game to starting state
   function resetGame() {
+    console.log('Resetting game...');
+    
     // Frage nach dem Spielernamen, wenn noch keiner gespeichert ist
     const savedName = window.localStorage.getItem('playerName');
     if (!savedName) {
@@ -445,6 +497,7 @@ class Player {
     score = 0;
     level = 1;
     gameState = "PLAY";
+    
     // Load high score list from local storage or initialize a blank list
     let stored = window.localStorage.getItem('highScores');
     if (stored) {
@@ -455,11 +508,24 @@ class Player {
     
     // Aktualisiere die globalen Highscores, wenn Supabase verfügbar ist
     if (supabase) {
+      console.log('Supabase available, fetching global high scores...');
       fetchGlobalHighScores();
+    } else {
+      console.log('Supabase not available, trying to initialize...');
+      
+      // Versuche erneut, Supabase zu initialisieren
+      initSupabase();
+      
+      // Wenn das nicht funktioniert, versuche es mit der globalen Variable
+      if (!supabase && window.supabaseClient) {
+        console.log('Using Supabase client from global variable');
+        supabase = window.supabaseClient;
+        fetchGlobalHighScores();
+      }
     }
     
     spawnEnemiesForLevel(level);
-    // Note: no loop() or noLoop() needed because p5 draw() will run continuously by default at ~60 FPS&#8203;:contentReference[oaicite:4]{index=4}
+    // Note: no loop() or noLoop() needed because p5 draw() will run continuously by default at ~60 FPS
   }
   
   // Funktion zum Abfragen des Spielernamens
@@ -495,9 +561,17 @@ class Player {
     }
   }
   
-  // The main draw loop (called ~60 times per second by p5.js)
+  // Draw function (runs every frame)
   function draw() {
-    background(0);  // clear screen with black background
+    // Überprüfe regelmäßig die Supabase-Verbindung
+    if (!supabase && frameCount % 300 === 0) { // Alle 5 Sekunden (bei 60 FPS)
+      console.log('Periodic connection check: Retrying Supabase initialization...');
+      initSupabase();
+    }
+    
+    // Clear the canvas with black background
+    background(0);
+    
     if (gameState === "PLAY") {
       // ** Handle Player Input **
       if (keyIsDown(LEFT_ARROW) || keyIsDown(65)) { // 65 = 'A'
@@ -696,7 +770,14 @@ class Player {
         for (let i = 0; i < Math.min(globalHighScores.length, 3); i++) {
           const entry = globalHighScores[i];
           const playerName = entry.player_name || "Anonym";
-          text(`${i+1}. ${playerName}: ${entry.score} (Level ${entry.level})`, width/2, height/2 + 110 + 20*i);
+          let displayText = `${i+1}. ${playerName}: ${entry.score}`;
+          
+          // Füge Level-Info hinzu, wenn verfügbar
+          if (entry.level !== undefined && entry.level !== null) {
+            displayText += ` (Level ${entry.level})`;
+          }
+          
+          text(displayText, width/2, height/2 + 110 + 20*i);
         }
       } else {
         // Zeige Status der Online-Bestenliste an
@@ -712,6 +793,21 @@ class Player {
     // If game over, pressing Enter will restart the game
     if (gameState === "GAMEOVER" && keyCode === ENTER) {
       resetGame();
+    }
+    
+    // Taste 'T' zum Testen der Supabase-Verbindung
+    if (key === 't' || key === 'T') {
+      console.log('Manual connection test requested');
+      
+      // Versuche, Supabase neu zu initialisieren
+      initSupabase();
+      
+      // Wenn das nicht funktioniert, versuche es mit der globalen Variable
+      if (!supabase && window.supabaseClient) {
+        console.log('Using Supabase client from global variable');
+        supabase = window.supabaseClient;
+        testConnection();
+      }
     }
   }
   
@@ -732,17 +828,22 @@ class Player {
       const playerName = window.localStorage.getItem('playerName') || 'Anonymous';
       
       onlineLeaderboardStatus = "Speichere Punktzahl...";
+      console.log('Saving score to Supabase:', score, 'level:', level);
+      
+      // Versuche direkt zu speichern
+      const scoreData = {
+        player_name: playerName,
+        score: score,
+        level: level
+      };
       
       supabase
         .from('leaderboard')
-        .insert([
-          { 
-            player_name: playerName, 
-            score: score,
-            level: level
-          }
-        ])
+        .insert([scoreData])
         .then(response => {
+          if (response.error) {
+            throw response.error;
+          }
           console.log('Score saved to database', response);
           onlineLeaderboardStatus = "Punktzahl gespeichert!";
           // Nach dem Speichern die globalen Top-Scores abrufen
@@ -750,10 +851,55 @@ class Player {
         })
         .catch(error => {
           console.error('Error saving score:', error);
-          onlineLeaderboardStatus = "Fehler beim Speichern: " + error.message;
+          
+          // Versuche es ohne level-Feld, falls das der Fehler war
+          if (error.message && (error.message.includes('level') || error.code === '42703')) {
+            console.log('Trying without level field');
+            const simpleScoreData = {
+              player_name: playerName,
+              score: score
+            };
+            
+            supabase
+              .from('leaderboard')
+              .insert([simpleScoreData])
+              .then(response => {
+                if (response.error) {
+                  throw response.error;
+                }
+                console.log('Score saved to database (without level)', response);
+                onlineLeaderboardStatus = "Punktzahl gespeichert!";
+                setTimeout(fetchGlobalHighScores, 1000);
+              })
+              .catch(secondError => {
+                console.error('Second attempt failed:', secondError);
+                onlineLeaderboardStatus = "Fehler beim Speichern: " + secondError.message;
+                
+                // Trotzdem versuchen, die globalen Highscores zu laden
+                setTimeout(fetchGlobalHighScores, 1000);
+              });
+          } else {
+            onlineLeaderboardStatus = "Fehler beim Speichern: " + error.message;
+            
+            // Trotzdem versuchen, die globalen Highscores zu laden
+            setTimeout(fetchGlobalHighScores, 1000);
+          }
         });
     } else {
       onlineLeaderboardStatus = "Offline-Modus: Punktzahl nur lokal gespeichert";
+      
+      // Versuche, Supabase zu initialisieren
+      console.log('Trying to initialize Supabase...');
+      initSupabase();
+      
+      // Wenn das nicht funktioniert, versuche es mit der globalen Variable
+      if (!supabase && window.supabaseClient) {
+        console.log('Using Supabase client from global variable');
+        supabase = window.supabaseClient;
+        
+        // Versuche erneut, den Score zu speichern
+        setTimeout(() => triggerGameOver(), 500);
+      }
     }
   }
   

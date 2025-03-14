@@ -166,11 +166,26 @@
       }
       
       try {
+        // Zuerst die Tabellenstruktur prüfen
+        const { data: columns, error: columnsError } = await result.client
+          .from('leaderboard')
+          .select('*')
+          .limit(1);
+        
+        if (columnsError) throw columnsError;
+        
+        // Testdaten basierend auf verfügbaren Spalten erstellen
         const testScore = {
           player_name: 'Test-Spieler',
-          score: Math.floor(Math.random() * 1000) + 1,
-          level: Math.floor(Math.random() * 5) + 1
+          score: Math.floor(Math.random() * 1000) + 1
         };
+        
+        // Prüfen, ob level-Spalte existiert (entweder in den Daten oder als leerer Wert)
+        if (columns && columns.length > 0 && ('level' in columns[0] || columns[0].level === null)) {
+          testScore.level = Math.floor(Math.random() * 5) + 1;
+        }
+        
+        document.getElementById('resultOutput').textContent = 'Versuche Test-Score hinzuzufügen: ' + JSON.stringify(testScore);
         
         const { data, error } = await result.client
           .from('leaderboard')
@@ -180,8 +195,27 @@
         
         document.getElementById('resultOutput').textContent = 'Test-Score erfolgreich hinzugefügt!\n\n' + JSON.stringify(testScore, null, 2);
       } catch (error) {
-        document.getElementById('resultOutput').textContent = `Fehler beim Hinzufügen des Test-Scores: ${error.message}`;
+        document.getElementById('resultOutput').textContent = `Fehler beim Hinzufügen des Test-Scores: ${error.message}\n\nVersuche es ohne die 'level'-Spalte...`;
         console.error(error);
+        
+        // Zweiter Versuch ohne level-Feld
+        try {
+          const simpleTestScore = {
+            player_name: 'Test-Spieler',
+            score: Math.floor(Math.random() * 1000) + 1
+          };
+          
+          const { data, error } = await result.client
+            .from('leaderboard')
+            .insert([simpleTestScore]);
+          
+          if (error) throw error;
+          
+          document.getElementById('resultOutput').textContent = 'Test-Score erfolgreich hinzugefügt (ohne level)!\n\n' + JSON.stringify(simpleTestScore, null, 2);
+        } catch (secondError) {
+          document.getElementById('resultOutput').textContent += `\n\nAuch zweiter Versuch fehlgeschlagen: ${secondError.message}`;
+          console.error(secondError);
+        }
       }
     });
   </script>
