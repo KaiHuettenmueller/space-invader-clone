@@ -35,7 +35,7 @@ cd space-invader-clone
 
 ## Spielen
 
-Du kannst das Spiel direkt hier spielen: [Space Invader Clone](https://DEIN-USERNAME.github.io/DEIN-REPO-NAME/)
+Du kannst das Spiel direkt hier spielen: [Space Invader Clone](https://kaihuettenmueller.github.io/space-invader-clone/)
 
 Alternativ kannst du einen lokalen Webserver verwenden:
 ```
