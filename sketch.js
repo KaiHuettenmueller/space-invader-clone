@@ -2394,7 +2394,7 @@ function createGameOverForm() {
   jobTitle.parent(jobContainer);
   
   // Jobsuche-Text
-  const jobText = createP('Ich suche eine berufliche Herausforderung! Wenn ihr von spannenden Möglichkeiten hört, freue ich mich über Tipps oder eine Weiterempfehlung');
+  const jobText = createP('Ich suche eine neue berufliche Herausforderung! Wenn ihr von spannenden Möglichkeiten hört, freue ich mich über Tipps oder eine Weiterempfehlung');
   jobText.style('color', spaceColors.text);
   jobText.style('text-align', 'center');
   jobText.style('margin', '0 0 10px 0');
