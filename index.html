@@ -68,8 +68,8 @@
   <!-- Minifizierte Version von p5.js verwenden, um Speicher zu sparen -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
   
-  <!-- Supabase direkt einbinden -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Supabase direkt einbinden mit spezifischer Version -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4/dist/umd/supabase.min.js"></script>
   
   <script>
     // Supabase-Konfiguration
@@ -105,7 +105,23 @@
           console.log('Supabase-Client erfolgreich erstellt!');
           return true;
         } else {
-          console.error('Supabase-Bibliothek nicht gefunden!');
+          console.error('Supabase-Bibliothek nicht geladen!');
+          
+          // Versuche, die Bibliothek erneut zu laden
+          const script = document.createElement('script');
+          script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4/dist/umd/supabase.min.js';
+          script.onload = function() {
+            console.log('Supabase-Bibliothek nachgeladen!');
+            
+            // Versuche erneut zu initialisieren
+            if (typeof supabase !== 'undefined') {
+              supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+              window.supabaseClient = supabaseClient;
+              console.log('Supabase-Client nach Nachladen erstellt!');
+            }
+          };
+          document.head.appendChild(script);
+          
           return false;
         }
       } catch (error) {

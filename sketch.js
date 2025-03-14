@@ -1387,6 +1387,7 @@ let highScores = [];
 function setup() {
   // Debug-Ausgabe
   console.log('SETUP FUNCTION CALLED');
+  
   // Lademeldung entfernen
   const loadingMessage = document.getElementById('loadingMessage');
   if (loadingMessage) {
@@ -1406,27 +1407,41 @@ function setup() {
   // Initialize game entities
   resetGame();               // custom function to initialize/restart the game
   
+  // Initialisiere Sterne für den Hintergrund
+  initStars();
+  
   // Initialisiere Supabase und lade die Highscores
-  if (window.SupabaseService) {
-    console.log('Supabase-Service gefunden, initialisiere...');
-    window.SupabaseService.initialize()
-      .then(result => {
-        if (result) {
-          console.log('Supabase erfolgreich initialisiert, lade Highscores...');
-          fetchGlobalHighScores();
+  try {
+    if (typeof window.SupabaseService !== 'undefined') {
+      console.log('Supabase-Service gefunden, initialisiere...');
+      
+      // Wir verwenden eine Timeout-Funktion, um sicherzustellen, dass der Rest des Spiels
+      // auch dann funktioniert, wenn Supabase nicht verfügbar ist
+      setTimeout(() => {
+        window.SupabaseService.initialize()
+          .then(result => {
+            if (result) {
+              console.log('Supabase erfolgreich initialisiert, lade Highscores...');
+              fetchGlobalHighScores();
+            } else {
+              console.log('Supabase-Initialisierung fehlgeschlagen');
+              onlineLeaderboardStatus = "Supabase-Initialisierung fehlgeschlagen";
+            }
+          })
+          .catch(error => {
+            console.error('Fehler bei der Supabase-Initialisierung:', error);
+            onlineLeaderboardStatus = "Fehler: " + (error.message || "Unbekannter Fehler");
+          });
+      }, 1000);
     } else {
-          console.log('Supabase-Initialisierung fehlgeschlagen');
-          onlineLeaderboardStatus = "Supabase-Initialisierung fehlgeschlagen";
-      }
-    })
-    .catch(error => {
-        console.error('Fehler bei der Supabase-Initialisierung:', error);
-        onlineLeaderboardStatus = "Fehler: " + error.message;
-      });
-    } else {
-    console.error('Supabase-Service nicht gefunden');
-    onlineLeaderboardStatus = "Supabase-Service nicht verfügbar";
+      console.error('Supabase-Service nicht gefunden');
+      onlineLeaderboardStatus = "Supabase-Service nicht verfügbar";
     }
+  } catch (error) {
+    console.error('Fehler beim Zugriff auf Supabase-Service:', error);
+    onlineLeaderboardStatus = "Fehler beim Zugriff auf Supabase";
+    // Spiel läuft trotzdem weiter
+  }
 }
 
 // Funktion zum Abrufen der globalen Highscores
@@ -1434,32 +1449,36 @@ function fetchGlobalHighScores() {
   console.log('Rufe globale Highscores ab...');
   onlineLeaderboardStatus = "Lade Online-Bestenliste...";
   
-  if (!window.SupabaseService) {
-    console.error('Supabase-Service nicht verfügbar');
-    onlineLeaderboardStatus = "Supabase-Service nicht verfügbar";
-    return;
+  try {
+    if (typeof window.SupabaseService === 'undefined') {
+      console.error('Supabase-Service nicht verfügbar');
+      onlineLeaderboardStatus = "Supabase-Service nicht verfügbar";
+      return;
+    }
+    
+    window.SupabaseService.fetchHighScores(10)
+      .then(result => {
+        if (result.error) {
+          throw result.error;
+        }
+          
+        if (result.data && result.data.length > 0) {
+          globalHighScores = result.data;
+          console.log('Globale Highscores geladen:', globalHighScores);
+          onlineLeaderboardStatus = "";
+        } else {
+          console.log('Keine globalen Highscores gefunden');
+          onlineLeaderboardStatus = "Keine Online-Scores gefunden";
+        }
+      })
+      .catch(error => {
+        console.error('Fehler beim Abrufen der Highscores:', error);
+        onlineLeaderboardStatus = "Fehler: " + (error.message || "Unbekannter Fehler");
+      });
+  } catch (error) {
+    console.error('Fehler beim Zugriff auf Supabase-Service:', error);
+    onlineLeaderboardStatus = "Fehler beim Zugriff auf Supabase";
   }
-  
-  window.SupabaseService.fetchHighScores(10)
-    .then(result => {
-      if (result.error) {
-        throw result.error;
-      }
-        
-      if (result.data && result.data.length > 0) {
-        globalHighScores = result.data;
-        onlineLeaderboardStatus = "";
-        console.log('Globale Highscores abgerufen:', globalHighScores);
-      } else {
-        onlineLeaderboardStatus = "Keine Online-Scores gefunden";
-        console.log('Keine globalen Highscores gefunden');
-      }
-    })
-    .catch(error => {
-      console.error('Fehler beim Abrufen der globalen Highscores:', error);
-        onlineLeaderboardStatus = "Fehler beim Laden: " + (error.message || "Unbekannter Fehler");
-      globalHighScores = [];
-    });
 }
 
 // Initialize or reset the game to starting state
