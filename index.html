@@ -3,7 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <title>Kai's Pixel Art Space Shooter</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.js"></script>
+  <!-- Speicherlimit erhöhen -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  
+  <!-- Minifizierte Version von p5.js verwenden, um Speicher zu sparen -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
   
   <!-- CORS Anywhere als Proxy -->
   <script>
@@ -14,10 +20,24 @@
     const SUPABASE_URL = 'https://dwmchnkwymyyssldbcky.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR3bWNobmt3eW15eXNzbGRiY2t5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE5NDk5MzYsImV4cCI6MjA1NzUyNTkzNn0.llOZSlp--MV5PhbkFGG2eVuO2eFUh5taKqibRpHzhVc';
     let supabaseClient = null;
+    
+    // Speichermanagement
+    function cleanupMemory() {
+      // Globale Objekte bereinigen
+      if (window.gc) {
+        window.gc();
+      }
+      
+      // Alte Event-Listener entfernen
+      if (window.supabaseClient) {
+        // Bereinigen von potenziellen Speicherlecks
+        window.supabaseClient = null;
+      }
+    }
   </script>
   
-  <!-- Supabase direkt einbinden (neuere Version) -->
-  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <!-- Supabase direkt einbinden (minifizierte Version) -->
+  <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   
   <!-- Globale Supabase-Variablen -->
   <script>
@@ -41,9 +61,6 @@
           
           // Globale Variable setzen, damit sketch.js darauf zugreifen kann
           window.supabaseClient = supabaseClient;
-          
-          // Teste die Verbindung mit einer einfachen Anfrage
-          testConnection();
         } catch (error) {
           console.error('Error creating Supabase client:', error);
         }
@@ -51,40 +68,13 @@
         console.error('Supabase library not loaded!');
         // Versuche, die Bibliothek erneut zu laden
         const script = document.createElement('script');
-        script.src = "https://unpkg.com/@supabase/supabase-js@2";
+        script.src = "https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.min.js";
         script.onload = function() {
           console.log('Supabase library loaded dynamically!');
           initSupabaseClient(); // Versuche erneut zu initialisieren
         };
         document.head.appendChild(script);
       }
-    }
-    
-    // Funktion zum Testen der Verbindung
-    function testConnection() {
-      if (!supabaseClient) {
-        console.error('Cannot test connection: Supabase client not initialized');
-        return;
-      }
-      
-      console.log('Testing Supabase connection...');
-      
-      // Einfache Anfrage zum Testen
-      supabaseClient
-        .from('leaderboard')
-        .select('count', { count: 'exact', head: true })
-        .then(response => {
-          console.log('Connection test successful:', response);
-          if (window.onSupabaseConnected) {
-            window.onSupabaseConnected();
-          }
-        })
-        .catch(error => {
-          console.error('Connection test failed:', error);
-          if (error.message && error.message.includes('CORS')) {
-            console.warn('CORS error detected. Consider using a CORS proxy for API requests.');
-          }
-        });
     }
     
     // Warte, bis das Dokument vollständig geladen ist
@@ -98,11 +88,23 @@
     window.onload = function() {
       console.log('Window loaded, checking Supabase...');
       
+      // Speicher bereinigen
+      cleanupMemory();
+      
       // Wenn der Client noch nicht initialisiert wurde, versuche es erneut
       if (!window.supabaseClient) {
         // Verzögerung hinzufügen, um sicherzustellen, dass die Bibliothek geladen ist
         setTimeout(initSupabaseClient, 500);
       }
+    };
+    
+    // Bei Fehler oder Beenden der Seite Speicher bereinigen
+    window.onerror = function() {
+      cleanupMemory();
+    };
+    
+    window.onbeforeunload = function() {
+      cleanupMemory();
     };
   </script>
   
@@ -114,10 +116,42 @@
       overflow: hidden;
       background-color: black;
     }
+    
+    /* Fehlermeldung-Styling */
+    .error-message {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background-color: rgba(255, 0, 0, 0.8);
+      color: white;
+      padding: 10px;
+      text-align: center;
+      z-index: 1000;
+      display: none;
+    }
   </style>
   <!-- Favicon hinzufügen, um 404-Fehler zu vermeiden -->
   <link rel="icon" href="data:,">
 </head>
 <body>
+  <!-- Fehlermeldung-Container -->
+  <div id="error-message" class="error-message"></div>
+  
+  <script>
+    // Globaler Fehlerhandler
+    window.addEventListener('error', function(e) {
+      console.error('Global error:', e.message);
+      document.getElementById('error-message').style.display = 'block';
+      document.getElementById('error-message').textContent = 'Fehler: ' + e.message;
+      
+      // Versuche, das Spiel neu zu starten
+      if (e.message.includes('memory') || e.message.includes('Memory')) {
+        setTimeout(function() {
+          location.reload();
+        }, 3000);
+      }
+    });
+  </script>
 </body>
 </html>

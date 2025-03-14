@@ -3,6 +3,13 @@
 // Supabase-Variablen
 let supabase; // Der Supabase-Client
 
+// Globale Variablen für Speichermanagement
+let framesSinceLastCleanup = 0;
+const CLEANUP_INTERVAL = 300; // Alle 5 Sekunden (bei 60 FPS)
+const MAX_ENEMIES = 50; // Maximale Anzahl von Gegnern
+const MAX_BULLETS = 100; // Maximale Anzahl von Kugeln
+const MAX_POWERUPS = 10; // Maximale Anzahl von Power-Ups
+
 class Player {
     constructor(x, y) {
       // Position (start at given coordinates)
@@ -614,7 +621,7 @@ class Player {
       enemies.push(boss);
     } else {
       // Spawn a wave of normal enemies
-      let numEnemies = lvl + 4;  // increasing number of enemies each level
+      let numEnemies = Math.min(lvl + 4, MAX_ENEMIES - enemies.length);  // Begrenze die Anzahl der Gegner
       for (let i = 0; i < numEnemies; i++) {
         // Determine enemy type based on level (higher levels introduce new types)
         let possibleTypes = [1];
@@ -631,6 +638,13 @@ class Player {
   
   // Draw function (runs every frame)
   function draw() {
+    // Speichermanagement: Regelmäßige Bereinigung
+    framesSinceLastCleanup++;
+    if (framesSinceLastCleanup >= CLEANUP_INTERVAL) {
+      cleanupGameObjects();
+      framesSinceLastCleanup = 0;
+    }
+    
     // Überprüfe regelmäßig die Supabase-Verbindung
     if (!supabase && frameCount % 300 === 0) { // Alle 5 Sekunden (bei 60 FPS)
       console.log('Periodic connection check: Retrying Supabase initialization...');
@@ -657,13 +671,19 @@ class Player {
       // Shooting (space or 'Z'); create a bullet if cooldown allows
       if (keyIsDown(32) || keyIsDown(90)) { // 32 = SPACE, 90 = 'Z'
         let newBullet = player.shoot();
-        if (newBullet) {
+        if (newBullet && bullets.length < MAX_BULLETS) {
           bullets.push(newBullet);
         }
       }
   
       // ** Update Entities **
       player.update();
+      
+      // Begrenze die Anzahl der Gegner
+      if (enemies.length > MAX_ENEMIES) {
+        enemies = enemies.slice(0, MAX_ENEMIES);
+      }
+      
       // Update enemies and possibly trigger enemy shooting
       for (let ei = enemies.length - 1; ei >= 0; ei--) {
         let e = enemies[ei];
@@ -672,7 +692,7 @@ class Player {
         if (e.canShoot) {
           if (e.type === "boss") {
             // Boss: fires periodically (e.g., every 60 frames)
-            if (frameCount % 60 === 0) {
+            if (frameCount % 60 === 0 && bullets.length < MAX_BULLETS) {
               // Boss fires a spread of bullets
               bullets.push(new Bullet(e.x, e.y + e.height/2, 0, BULLET_SPEED, true));      // straight down
               bullets.push(new Bullet(e.x, e.y + e.height/2, -2, BULLET_SPEED, true));     // angled left
@@ -680,7 +700,7 @@ class Player {
             }
           } else if (e.type === 3) {
             // Type 3 shooter enemy: random chance to shoot, increased slightly with level
-            if (random(1) < e.shootChance * level) {
+            if (random(1) < e.shootChance * level && bullets.length < MAX_BULLETS) {
               bullets.push(new Bullet(e.x, e.y + e.height/2, 0, BULLET_SPEED, true));
             }
           }
@@ -690,6 +710,12 @@ class Player {
           enemies.splice(ei, 1);
         }
       }
+      
+      // Begrenze die Anzahl der Kugeln
+      if (bullets.length > MAX_BULLETS) {
+        bullets = bullets.slice(0, MAX_BULLETS);
+      }
+      
       // Update bullets
       for (let bi = bullets.length - 1; bi >= 0; bi--) {
         let b = bullets[bi];
@@ -699,6 +725,12 @@ class Player {
           continue;
         }
       }
+      
+      // Begrenze die Anzahl der Power-Ups
+      if (powerUps.length > MAX_POWERUPS) {
+        powerUps = powerUps.slice(0, MAX_POWERUPS);
+      }
+      
       // Update power-ups
       for (let pi = powerUps.length - 1; pi >= 0; pi--) {
         let p = powerUps[pi];
@@ -1029,6 +1061,38 @@ class Player {
           // Trotzdem versuchen, die globalen Highscores zu laden
           setTimeout(fetchGlobalHighScores, 1000);
         });
+    }
+  }
+  
+  // Funktion zum Bereinigen von Spielobjekten
+  function cleanupGameObjects() {
+    console.log('Cleaning up game objects...');
+    
+    // Entferne Kugeln, die außerhalb des Bildschirms sind
+    bullets = bullets.filter(b => !b.offScreen());
+    
+    // Entferne Power-Ups, die außerhalb des Bildschirms sind
+    powerUps = powerUps.filter(p => !p.offScreen());
+    
+    // Entferne Gegner, die zu weit unten sind
+    enemies = enemies.filter(e => e.y <= height + e.height * 2);
+    
+    // Begrenze die Anzahl der Objekte
+    if (enemies.length > MAX_ENEMIES) {
+      enemies = enemies.slice(0, MAX_ENEMIES);
+    }
+    
+    if (bullets.length > MAX_BULLETS) {
+      bullets = bullets.slice(0, MAX_BULLETS);
+    }
+    
+    if (powerUps.length > MAX_POWERUPS) {
+      powerUps = powerUps.slice(0, MAX_POWERUPS);
+    }
+    
+    // Versuche, den Speicher zu bereinigen
+    if (window.gc) {
+      window.gc();
     }
   }
   
