@@ -8,20 +8,75 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   
+  <!-- Favicon hinzufügen, um 404-Fehler zu vermeiden -->
+  <link rel="icon" href="data:,">
+  
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background-color: #000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    canvas {
+      display: block;
+      margin: 0 auto;
+    }
+    #gameContainer {
+      position: relative;
+      margin: 0 auto;
+    }
+    #debugInfo {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      color: white;
+      font-family: monospace;
+      font-size: 12px;
+      background-color: rgba(0, 0, 0, 0.5);
+      padding: 5px;
+      border-radius: 3px;
+      display: none;
+    }
+    #loadingMessage {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      font-family: monospace;
+      font-size: 18px;
+      background-color: rgba(0, 0, 0, 0.7);
+      padding: 20px;
+      border-radius: 5px;
+      z-index: 1000;
+    }
+  </style>
+</head>
+<body>
+  <div id="loadingMessage">Lade Spiel...</div>
+  
+  <div id="gameContainer">
+    <div id="debugInfo"></div>
+  </div>
+  
+  <!-- Skripte am Ende des Body-Tags laden -->
   <!-- Minifizierte Version von p5.js verwenden, um Speicher zu sparen -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
   
-  <!-- Supabase direkt einbinden (minifizierte Version) -->
-  <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <!-- Supabase direkt einbinden -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   
-  <!-- CORS Anywhere als Proxy -->
   <script>
-    // CORS-Proxy-URL (falls benötigt)
-    const CORS_PROXY = "https://corsproxy.io/?";
-    
-    // Globale Variablen für Supabase
+    // Supabase-Konfiguration
     const SUPABASE_URL = 'https://dwmchnkwymyyssldbcky.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR3bWNobmt3eW15eXNzbGRiY2t5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE5NDk5MzYsImV4cCI6MjA1NzUyNTkzNn0.llOZSlp--MV5PhbkFGG2eVuO2eFUh5taKqibRpHzhVc';
+    
+    // Globale Supabase-Variable
     let supabaseClient = null;
     
     // Speichermanagement
@@ -30,100 +85,41 @@
       if (window.gc) {
         window.gc();
       }
-      
-      // Alte Event-Listener entfernen
-      if (window.supabaseClient) {
-        // Bereinigen von potenziellen Speicherlecks
-        window.supabaseClient = null;
-      }
     }
     
-    // Funktion zur Initialisierung des Supabase-Clients
-    function initSupabaseClient() {
-      console.log('Initializing Supabase client...');
-      
-      if (typeof supabase !== 'undefined') {
-        console.log('Supabase library loaded successfully!');
+    // Initialisiere Supabase
+    function initializeSupabase() {
+      try {
+        console.log('Initialisiere Supabase...');
         
-        try {
-          // Supabase-Client erstellen
-          // Wir verwenden die direkte URL ohne Proxy für die Initialisierung
-          supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
-            auth: {
-              autoRefreshToken: true,
-              persistSession: true
-            }
-          });
-          console.log('Supabase client created successfully!');
+        // Prüfen, ob die Supabase-Bibliothek geladen ist
+        if (typeof supabase !== 'undefined') {
+          console.log('Supabase-Bibliothek gefunden!');
           
-          // Globale Variable setzen, damit sketch.js darauf zugreifen kann
+          // Supabase-Client erstellen
+          supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+          
+          // Globale Variable setzen
           window.supabaseClient = supabaseClient;
           
-          // Teste die Verbindung
-          testSupabaseConnection();
-        } catch (error) {
-          console.error('Error creating Supabase client:', error);
+          console.log('Supabase-Client erfolgreich erstellt!');
+          return true;
+        } else {
+          console.error('Supabase-Bibliothek nicht gefunden!');
+          return false;
         }
-      } else {
-        console.error('Supabase library not loaded!');
-        // Versuche, die Bibliothek erneut zu laden
-        const script = document.createElement('script');
-        script.src = "https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.min.js";
-        script.onload = function() {
-          console.log('Supabase library loaded dynamically!');
-          initSupabaseClient(); // Versuche erneut zu initialisieren
-        };
-        document.head.appendChild(script);
+      } catch (error) {
+        console.error('Fehler bei der Initialisierung von Supabase:', error);
+        return false;
       }
     }
     
-    // Funktion zum Testen der Verbindung
-    function testSupabaseConnection() {
-      if (!supabaseClient) {
-        console.error('Cannot test connection: Supabase client not initialized');
-        return;
-      }
-      
-      console.log('Testing Supabase connection...');
-      
-      // Einfache Anfrage zum Testen
-      supabaseClient
-        .from('leaderboard')
-        .select('count', { count: 'exact', head: true })
-        .then(response => {
-          console.log('Connection test successful:', response);
-          console.log('Supabase is ready to use!');
-        })
-        .catch(error => {
-          console.error('Connection test failed:', error);
-        });
-    }
-  </script>
-  
-  <!-- Warte, bis Supabase initialisiert ist, bevor sketch.js geladen wird -->
-  <script>
     // Initialisiere Supabase sofort
-    initSupabaseClient();
-    
-    // Lade sketch.js erst, wenn das Dokument vollständig geladen ist
-    document.addEventListener('DOMContentLoaded', function() {
-      console.log('DOM fully loaded');
-      
-      // Stelle sicher, dass Supabase initialisiert ist
-      if (!window.supabaseClient) {
-        console.log('Supabase not initialized yet, trying again...');
-        initSupabaseClient();
-      }
-      
-      // Lade sketch.js dynamisch
-      const scriptElement = document.createElement('script');
-      scriptElement.src = 'sketch.js';
-      document.body.appendChild(scriptElement);
-    });
+    initializeSupabase();
     
     // Bei Fehler oder Beenden der Seite Speicher bereinigen
     window.onerror = function(message) {
-      console.error('Global error:', message);
+      console.error('Globaler Fehler:', message);
       cleanupMemory();
     };
     
@@ -132,48 +128,23 @@
     };
   </script>
   
-  <style>
-    body, html {
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-      background-color: black;
-    }
-    
-    /* Fehlermeldung-Styling */
-    .error-message {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      background-color: rgba(255, 0, 0, 0.8);
-      color: white;
-      padding: 10px;
-      text-align: center;
-      z-index: 1000;
-      display: none;
-    }
-  </style>
-  <!-- Favicon hinzufügen, um 404-Fehler zu vermeiden -->
-  <link rel="icon" href="data:,">
-</head>
-<body>
-  <!-- Fehlermeldung-Container -->
-  <div id="error-message" class="error-message"></div>
+  <!-- Supabase-Service einbinden -->
+  <script src="supabase-service.js"></script>
+  
+  <!-- Hauptspiel einbinden -->
+  <script src="sketch.js"></script>
   
   <script>
-    // Globaler Fehlerhandler
-    window.addEventListener('error', function(e) {
-      console.error('Global error:', e.message);
-      document.getElementById('error-message').style.display = 'block';
-      document.getElementById('error-message').textContent = 'Fehler: ' + e.message;
-      
-      // Versuche, das Spiel neu zu starten
-      if (e.message.includes('memory') || e.message.includes('Memory')) {
-        setTimeout(function() {
-          location.reload();
-        }, 3000);
-      }
+    // Entferne die Lademeldung, wenn das Fenster vollständig geladen ist
+    window.addEventListener('load', function() {
+      console.log('Fenster vollständig geladen');
+      setTimeout(() => {
+        const loadingMessage = document.getElementById('loadingMessage');
+        if (loadingMessage) {
+          console.log('Entferne Lademeldung');
+          loadingMessage.style.display = 'none';
+        }
+      }, 1000);
     });
   </script>
 </body>
