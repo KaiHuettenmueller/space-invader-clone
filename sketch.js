@@ -10,6 +10,10 @@ const MAX_ENEMIES = 50; // Maximale Anzahl von Gegnern
 const MAX_BULLETS = 100; // Maximale Anzahl von Kugeln
 const MAX_POWERUPS = 10; // Maximale Anzahl von Power-Ups
 
+// Globale Variablen für die Online-Bestenliste
+let globalHighScores = [];
+let onlineLeaderboardStatus = "Lade Online-Bestenliste...";
+
 class Player {
     constructor(x, y) {
       // Position (start at given coordinates)
@@ -341,10 +345,6 @@ class Player {
   const BULLET_SPEED = 5;
   let highScores = [];
   
-  // Globale Variable für die Online-Highscores
-  let globalHighScores = [];
-  let onlineLeaderboardStatus = "Lade Online-Bestenliste...";
-  
   // Setup function (runs once at start)
   function setup() {
     createCanvas(400, 600);
@@ -355,10 +355,19 @@ class Player {
     console.log('Game setup started');
     
     // Supabase-Client aus der globalen Variable holen
-    initSupabase();
+    const supabaseInitialized = initSupabase();
     
     // Initialize game entities
     resetGame();               // custom function to initialize/restart the game
+    
+    // Wenn Supabase nicht initialisiert wurde, versuche es später noch einmal
+    if (!supabaseInitialized) {
+      setTimeout(() => {
+        if (!supabase) {
+          initSupabase();
+        }
+      }, 3000);
+    }
   }
   
   // Einfache Funktion zur Initialisierung von Supabase
@@ -372,6 +381,7 @@ class Player {
       
       // Verbindung testen
       testConnection();
+      return true;
     } else {
       console.error('Supabase client not available in global variable');
       onlineLeaderboardStatus = "Supabase nicht verfügbar";
@@ -382,35 +392,16 @@ class Player {
           console.log('Supabase client found after delay');
           supabase = window.supabaseClient;
           testConnection();
-        } else if (typeof supabase !== 'undefined') {
-          // Versuche, den Client direkt zu erstellen, falls die Bibliothek geladen ist
-          try {
-            // Verwende die globalen Variablen aus index.html
-            supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
-              auth: {
-                autoRefreshToken: true,
-                persistSession: true
-              }
-            });
-            console.log('Created Supabase client directly in sketch.js');
-            window.supabaseClient = supabase; // Setze die globale Variable
-            testConnection();
-          } catch (error) {
-            console.error('Error creating Supabase client in sketch.js:', error);
-            onlineLeaderboardStatus = "Fehler bei Supabase-Initialisierung";
-            
-            // Versuche es später noch einmal
-            setTimeout(initSupabase, 2000);
-          }
+          return true;
         } else {
-          console.error('Supabase library still not available after delay');
-          onlineLeaderboardStatus = "Supabase-Bibliothek nicht verfügbar";
-          
-          // Versuche es später noch einmal
-          setTimeout(initSupabase, 2000);
+          console.error('Supabase client still not available after delay');
+          onlineLeaderboardStatus = "Supabase nicht verfügbar";
+          return false;
         }
-      }, 1000);
+      }, 2000);
     }
+    
+    return false;
   }
   
   // Funktion zum Testen der Verbindung

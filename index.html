@@ -11,6 +11,9 @@
   <!-- Minifizierte Version von p5.js verwenden, um Speicher zu sparen -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
   
+  <!-- Supabase direkt einbinden (minifizierte Version) -->
+  <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  
   <!-- CORS Anywhere als Proxy -->
   <script>
     // CORS-Proxy-URL (falls benötigt)
@@ -34,13 +37,7 @@
         window.supabaseClient = null;
       }
     }
-  </script>
-  
-  <!-- Supabase direkt einbinden (minifizierte Version) -->
-  <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  
-  <!-- Globale Supabase-Variablen -->
-  <script>
+    
     // Funktion zur Initialisierung des Supabase-Clients
     function initSupabaseClient() {
       console.log('Initializing Supabase client...');
@@ -61,6 +58,9 @@
           
           // Globale Variable setzen, damit sketch.js darauf zugreifen kann
           window.supabaseClient = supabaseClient;
+          
+          // Teste die Verbindung
+          testSupabaseConnection();
         } catch (error) {
           console.error('Error creating Supabase client:', error);
         }
@@ -77,29 +77,53 @@
       }
     }
     
-    // Warte, bis das Dokument vollständig geladen ist
+    // Funktion zum Testen der Verbindung
+    function testSupabaseConnection() {
+      if (!supabaseClient) {
+        console.error('Cannot test connection: Supabase client not initialized');
+        return;
+      }
+      
+      console.log('Testing Supabase connection...');
+      
+      // Einfache Anfrage zum Testen
+      supabaseClient
+        .from('leaderboard')
+        .select('count', { count: 'exact', head: true })
+        .then(response => {
+          console.log('Connection test successful:', response);
+          console.log('Supabase is ready to use!');
+        })
+        .catch(error => {
+          console.error('Connection test failed:', error);
+        });
+    }
+  </script>
+  
+  <!-- Warte, bis Supabase initialisiert ist, bevor sketch.js geladen wird -->
+  <script>
+    // Initialisiere Supabase sofort
+    initSupabaseClient();
+    
+    // Lade sketch.js erst, wenn das Dokument vollständig geladen ist
     document.addEventListener('DOMContentLoaded', function() {
-      console.log('DOM fully loaded, initializing Supabase...');
-      // Verzögerung hinzufügen, um sicherzustellen, dass die Bibliothek geladen ist
-      setTimeout(initSupabaseClient, 500);
+      console.log('DOM fully loaded');
+      
+      // Stelle sicher, dass Supabase initialisiert ist
+      if (!window.supabaseClient) {
+        console.log('Supabase not initialized yet, trying again...');
+        initSupabaseClient();
+      }
+      
+      // Lade sketch.js dynamisch
+      const scriptElement = document.createElement('script');
+      scriptElement.src = 'sketch.js';
+      document.body.appendChild(scriptElement);
     });
     
-    // Zusätzlich beim Fenster-Load-Event versuchen
-    window.onload = function() {
-      console.log('Window loaded, checking Supabase...');
-      
-      // Speicher bereinigen
-      cleanupMemory();
-      
-      // Wenn der Client noch nicht initialisiert wurde, versuche es erneut
-      if (!window.supabaseClient) {
-        // Verzögerung hinzufügen, um sicherzustellen, dass die Bibliothek geladen ist
-        setTimeout(initSupabaseClient, 500);
-      }
-    };
-    
     // Bei Fehler oder Beenden der Seite Speicher bereinigen
-    window.onerror = function() {
+    window.onerror = function(message) {
+      console.error('Global error:', message);
       cleanupMemory();
     };
     
@@ -108,7 +132,6 @@
     };
   </script>
   
-  <script src="sketch.js"></script>
   <style>
     body, html {
       margin: 0;
