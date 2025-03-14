@@ -356,7 +356,7 @@ class Player {
   
   // Einfache Funktion zur Initialisierung von Supabase
   function initSupabase() {
-    console.log('Initializing Supabase...');
+    console.log('Initializing Supabase from sketch.js...');
     
     // Prüfen, ob der Supabase-Client in der globalen Variable verfügbar ist
     if (window.supabaseClient) {
@@ -368,6 +368,34 @@ class Player {
     } else {
       console.error('Supabase client not available in global variable');
       onlineLeaderboardStatus = "Supabase nicht verfügbar";
+      
+      // Warte kurz und versuche es erneut, falls die Initialisierung in index.html noch läuft
+      setTimeout(() => {
+        if (window.supabaseClient) {
+          console.log('Supabase client found after delay');
+          supabase = window.supabaseClient;
+          testConnection();
+        } else if (typeof supabase !== 'undefined') {
+          // Versuche, den Client direkt zu erstellen, falls die Bibliothek geladen ist
+          try {
+            const SUPABASE_URL = 'https://dwmchnkwymyyssldbcky.supabase.co';
+            const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR3bWNobmt3eW15eXNzbGRiY2t5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE5NDk5MzYsImV4cCI6MjA1NzUyNTkzNn0.llOZSlp--MV5PhbkFGG2eVuO2eFUh5taKqibRpHzhVc';
+            
+            supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+              auth: {
+                autoRefreshToken: true,
+                persistSession: true
+              }
+            });
+            console.log('Created Supabase client directly in sketch.js');
+            window.supabaseClient = supabase; // Setze die globale Variable
+            testConnection();
+          } catch (error) {
+            console.error('Error creating Supabase client in sketch.js:', error);
+            onlineLeaderboardStatus = "Fehler bei Supabase-Initialisierung";
+          }
+        }
+      }, 1000);
     }
   }
   
@@ -381,6 +409,28 @@ class Player {
     
     console.log('Testing Supabase connection...');
     onlineLeaderboardStatus = "Teste Verbindung...";
+    
+    // Direkter Fetch-Aufruf mit CORS-Proxy als Alternative testen
+    try {
+      fetch(CORS_PROXY + SUPABASE_URL + '/rest/v1/leaderboard?select=count', {
+        method: 'GET',
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Content-Type': 'application/json'
+        }
+      })
+      .then(response => {
+        console.log('Direct fetch test response:', response);
+        if (response.ok) {
+          console.log('Direct fetch test successful');
+        }
+      })
+      .catch(error => {
+        console.error('Direct fetch test failed:', error);
+      });
+    } catch (e) {
+      console.error('Error in direct fetch test:', e);
+    }
     
     // Einfacher Test: Versuche, die Anzahl der Einträge in der Tabelle zu zählen
     supabase
@@ -396,7 +446,48 @@ class Player {
       .catch(error => {
         console.error('Connection test failed:', error);
         onlineLeaderboardStatus = "Verbindungsfehler: " + error.message;
+        
+        // Versuche es mit dem CORS-Proxy
+        if (error.message && error.message.includes('CORS')) {
+          console.log('CORS error detected, trying with proxy...');
+          onlineLeaderboardStatus = "Versuche mit CORS-Proxy...";
+          
+          // Versuche, die Daten direkt mit fetch und CORS-Proxy zu holen
+          fetchWithCorsProxy();
+        }
       });
+  }
+  
+  // Funktion zum Abrufen der Daten mit CORS-Proxy
+  function fetchWithCorsProxy() {
+    console.log('Fetching with CORS proxy...');
+    
+    fetch(CORS_PROXY + SUPABASE_URL + '/rest/v1/leaderboard?select=*&order=score.desc&limit=10', {
+      method: 'GET',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Content-Type': 'application/json'
+      }
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Network response was not ok: ' + response.status);
+      }
+      return response.json();
+    })
+    .then(data => {
+      console.log('Data fetched with CORS proxy:', data);
+      if (data && data.length > 0) {
+        globalHighScores = data;
+        onlineLeaderboardStatus = "Daten über CORS-Proxy geladen";
+      } else {
+        onlineLeaderboardStatus = "Keine Daten über CORS-Proxy gefunden";
+      }
+    })
+    .catch(error => {
+      console.error('Error fetching with CORS proxy:', error);
+      onlineLeaderboardStatus = "CORS-Proxy-Fehler: " + error.message;
+    });
   }
   
   // Funktion zum Abrufen der globalen Highscores
@@ -436,7 +527,9 @@ class Player {
         if (error.code === 'PGRST301') {
           onlineLeaderboardStatus = "Tabelle nicht gefunden";
         } else if (error.message && error.message.includes('CORS')) {
-          onlineLeaderboardStatus = "CORS-Fehler: Zugriff verweigert";
+          onlineLeaderboardStatus = "CORS-Fehler: Versuche mit Proxy...";
+          // Versuche es mit dem CORS-Proxy
+          fetchWithCorsProxy();
         } else if (error.message && error.message.includes('network')) {
           onlineLeaderboardStatus = "Netzwerkfehler";
         } else {
@@ -446,38 +539,6 @@ class Player {
         // Leere die globalHighScores, damit keine alten Daten angezeigt werden
         globalHighScores = [];
       });
-  }
-  
-  // Funktion zum Überprüfen der CORS-Einstellungen
-  function checkCorsSettings() {
-    console.log('Checking CORS settings...');
-    
-    // Einfache Anfrage an die Supabase-API senden
-    fetch(SUPABASE_URL + '/rest/v1/leaderboard?select=count', {
-      method: 'GET',
-      headers: {
-        'apikey': SUPABASE_KEY,
-        'Content-Type': 'application/json'
-      }
-    })
-    .then(response => {
-      console.log('CORS check response:', response);
-      if (response.ok) {
-        console.log('CORS settings are correct');
-        return response.json();
-      } else {
-        throw new Error('CORS check failed with status: ' + response.status);
-      }
-    })
-    .then(data => {
-      console.log('CORS check data:', data);
-    })
-    .catch(error => {
-      console.error('CORS check error:', error);
-      if (error.message.includes('NetworkError') || error.message.includes('Failed to fetch')) {
-        console.error('This is likely a CORS issue. Make sure your Supabase project allows requests from: ' + window.location.origin);
-      }
-    });
   }
   
   // Initialize or reset the game to starting state
@@ -852,32 +913,39 @@ class Player {
         .catch(error => {
           console.error('Error saving score:', error);
           
-          // Versuche es ohne level-Feld, falls das der Fehler war
-          if (error.message && (error.message.includes('level') || error.code === '42703')) {
-            console.log('Trying without level field');
-            const simpleScoreData = {
-              player_name: playerName,
-              score: score
-            };
+          // Versuche es mit dem CORS-Proxy, wenn es ein CORS-Problem gibt
+          if (error.message && error.message.includes('CORS')) {
+            console.log('CORS error detected, trying with proxy...');
+            onlineLeaderboardStatus = "Versuche mit CORS-Proxy...";
             
-            supabase
-              .from('leaderboard')
-              .insert([simpleScoreData])
-              .then(response => {
-                if (response.error) {
-                  throw response.error;
-                }
-                console.log('Score saved to database (without level)', response);
-                onlineLeaderboardStatus = "Punktzahl gespeichert!";
-                setTimeout(fetchGlobalHighScores, 1000);
-              })
-              .catch(secondError => {
-                console.error('Second attempt failed:', secondError);
-                onlineLeaderboardStatus = "Fehler beim Speichern: " + secondError.message;
-                
-                // Trotzdem versuchen, die globalen Highscores zu laden
-                setTimeout(fetchGlobalHighScores, 1000);
-              });
+            // Versuche, den Score direkt mit fetch und CORS-Proxy zu speichern
+            fetch(CORS_PROXY + SUPABASE_URL + '/rest/v1/leaderboard', {
+              method: 'POST',
+              headers: {
+                'apikey': SUPABASE_KEY,
+                'Content-Type': 'application/json',
+                'Prefer': 'return=minimal'
+              },
+              body: JSON.stringify([scoreData])
+            })
+            .then(response => {
+              if (!response.ok) {
+                throw new Error('Network response was not ok: ' + response.status);
+              }
+              console.log('Score saved with CORS proxy');
+              onlineLeaderboardStatus = "Punktzahl über Proxy gespeichert!";
+              setTimeout(fetchGlobalHighScores, 1000);
+            })
+            .catch(proxyError => {
+              console.error('Error saving with CORS proxy:', proxyError);
+              onlineLeaderboardStatus = "Proxy-Fehler: " + proxyError.message;
+              
+              // Versuche es ohne level-Feld als Fallback
+              tryWithoutLevelField();
+            });
+          } else if (error.message && (error.message.includes('level') || error.code === '42703')) {
+            // Versuche es ohne level-Feld, falls das der Fehler war
+            tryWithoutLevelField();
           } else {
             onlineLeaderboardStatus = "Fehler beim Speichern: " + error.message;
             
@@ -900,6 +968,60 @@ class Player {
         // Versuche erneut, den Score zu speichern
         setTimeout(() => triggerGameOver(), 500);
       }
+    }
+    
+    // Hilfsfunktion zum Versuch ohne level-Feld
+    function tryWithoutLevelField() {
+      console.log('Trying without level field');
+      const simpleScoreData = {
+        player_name: playerName,
+        score: score
+      };
+      
+      supabase
+        .from('leaderboard')
+        .insert([simpleScoreData])
+        .then(response => {
+          if (response.error) {
+            throw response.error;
+          }
+          console.log('Score saved to database (without level)', response);
+          onlineLeaderboardStatus = "Punktzahl gespeichert!";
+          setTimeout(fetchGlobalHighScores, 1000);
+        })
+        .catch(secondError => {
+          console.error('Second attempt failed:', secondError);
+          
+          // Versuche es mit dem CORS-Proxy als letzten Ausweg
+          if (secondError.message && secondError.message.includes('CORS')) {
+            fetch(CORS_PROXY + SUPABASE_URL + '/rest/v1/leaderboard', {
+              method: 'POST',
+              headers: {
+                'apikey': SUPABASE_KEY,
+                'Content-Type': 'application/json',
+                'Prefer': 'return=minimal'
+              },
+              body: JSON.stringify([simpleScoreData])
+            })
+            .then(response => {
+              if (!response.ok) {
+                throw new Error('Network response was not ok: ' + response.status);
+              }
+              console.log('Simple score saved with CORS proxy');
+              onlineLeaderboardStatus = "Einfache Punktzahl über Proxy gespeichert!";
+              setTimeout(fetchGlobalHighScores, 1000);
+            })
+            .catch(proxyError => {
+              console.error('Error saving simple score with CORS proxy:', proxyError);
+              onlineLeaderboardStatus = "Fehler beim Speichern: " + secondError.message;
+            });
+          } else {
+            onlineLeaderboardStatus = "Fehler beim Speichern: " + secondError.message;
+          }
+          
+          // Trotzdem versuchen, die globalen Highscores zu laden
+          setTimeout(fetchGlobalHighScores, 1000);
+        });
     }
   }
   

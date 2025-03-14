@@ -5,6 +5,12 @@
   <title>Kai's Pixel Art Space Shooter</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.js"></script>
   
+  <!-- CORS Anywhere als Proxy -->
+  <script>
+    // CORS-Proxy-URL (falls benötigt)
+    const CORS_PROXY = "https://corsproxy.io/?";
+  </script>
+  
   <!-- Supabase direkt einbinden -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   
@@ -17,24 +23,85 @@
     // Supabase-Client initialisieren
     let supabaseClient;
     
-    window.onload = function() {
-      console.log('Window loaded, checking Supabase...');
+    // Funktion zur Initialisierung des Supabase-Clients
+    function initSupabaseClient() {
+      console.log('Initializing Supabase client...');
       
       if (typeof supabase !== 'undefined') {
         console.log('Supabase library loaded successfully!');
         
         try {
           // Supabase-Client erstellen
-          supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+          // Wir verwenden die direkte URL ohne Proxy für die Initialisierung
+          supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+            auth: {
+              autoRefreshToken: true,
+              persistSession: true
+            }
+          });
           console.log('Supabase client created successfully!');
           
           // Globale Variable setzen, damit sketch.js darauf zugreifen kann
           window.supabaseClient = supabaseClient;
+          
+          // Teste die Verbindung mit einer einfachen Anfrage
+          testConnection();
         } catch (error) {
           console.error('Error creating Supabase client:', error);
         }
       } else {
         console.error('Supabase library not loaded!');
+        // Versuche, die Bibliothek erneut zu laden
+        const script = document.createElement('script');
+        script.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js";
+        script.onload = function() {
+          console.log('Supabase library loaded dynamically!');
+          initSupabaseClient(); // Versuche erneut zu initialisieren
+        };
+        document.head.appendChild(script);
+      }
+    }
+    
+    // Funktion zum Testen der Verbindung
+    function testConnection() {
+      if (!supabaseClient) {
+        console.error('Cannot test connection: Supabase client not initialized');
+        return;
+      }
+      
+      console.log('Testing Supabase connection...');
+      
+      // Einfache Anfrage zum Testen
+      supabaseClient
+        .from('leaderboard')
+        .select('count', { count: 'exact', head: true })
+        .then(response => {
+          console.log('Connection test successful:', response);
+          if (window.onSupabaseConnected) {
+            window.onSupabaseConnected();
+          }
+        })
+        .catch(error => {
+          console.error('Connection test failed:', error);
+          if (error.message && error.message.includes('CORS')) {
+            console.warn('CORS error detected. Consider using a CORS proxy for API requests.');
+          }
+        });
+    }
+    
+    // Warte, bis das Dokument vollständig geladen ist
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('DOM fully loaded, initializing Supabase...');
+      initSupabaseClient();
+    });
+    
+    // Zusätzlich beim Fenster-Load-Event versuchen
+    window.onload = function() {
+      console.log('Window loaded, checking Supabase...');
+      
+      // Wenn der Client noch nicht initialisiert wurde, versuche es erneut
+      if (!window.supabaseClient) {
+        initSupabaseClient();
       }
     };
   </script>
