@@ -13,7 +13,6 @@ let onlineLeaderboardStatus = "Lade Online-Bestenliste...";
 
 // Neue Variablen für das Formular
 let playerNameInput;
-let playerEmailInput;
 let submitButton;
 let formSubmitted = false;
 
@@ -2096,7 +2095,6 @@ function triggerGameOver() {
   // Save score to Supabase database
   if (window.SupabaseService) {
     const playerName = window.localStorage.getItem('playerName') || 'Anonymous';
-    const playerEmail = window.localStorage.getItem('playerEmail') || '';
     
     onlineLeaderboardStatus = "Speichere Punktzahl...";
     console.log('Speichere Punktzahl in Supabase:', score, 'level:', level);
@@ -2106,7 +2104,7 @@ function triggerGameOver() {
       .then(initialized => {
         if (initialized) {
           // Speichere den Highscore
-          return window.SupabaseService.saveHighScore(playerName, score, level, playerEmail);
+          return window.SupabaseService.saveHighScore(playerName, score, level);
         } else {
           throw new Error('Supabase konnte nicht initialisiert werden');
         }
@@ -2245,19 +2243,7 @@ function createGameOverForm() {
   playerNameInput.style('font-family', 'Arial, sans-serif');
   playerNameInput.parent(formContainer);
   
-  playerEmailInput = createInput('');
-  playerEmailInput.attribute('placeholder', 'Enter your email');
-  playerEmailInput.attribute('type', 'email');
-  playerEmailInput.style('width', '100%');
-  playerEmailInput.style('padding', '10px');
-  playerEmailInput.style('margin-bottom', '15px'); // Margin reduzieren
-  playerEmailInput.style('border-radius', '5px');
-  playerEmailInput.style('border', '1px solid #8A2BE2');
-  playerEmailInput.style('background-color', '#333333');
-  playerEmailInput.style('color', 'white');
-  playerEmailInput.style('box-sizing', 'border-box');
-  playerEmailInput.style('font-family', 'Arial, sans-serif');
-  playerEmailInput.parent(formContainer);
+  // E-Mail-Feld entfernt
   
   // Submit Button
   submitButton = createButton('SUBMIT SCORE');
@@ -2436,10 +2422,7 @@ function removeGameOverForm() {
     playerNameInput.remove();
     playerNameInput = null;
   }
-  if (playerEmailInput) {
-    playerEmailInput.remove();
-    playerEmailInput = null;
-  }
+  
   if (submitButton) {
     submitButton.remove();
     submitButton = null;
@@ -2449,20 +2432,14 @@ function removeGameOverForm() {
 // Funktion zum Speichern der Spielerinformationen
 function submitPlayerInfo() {
   const name = playerNameInput.value().trim();
-  const email = playerEmailInput.value().trim();
   
   if (name) {
     window.localStorage.setItem('playerName', name);
     console.log('Name gespeichert:', name);
     
-    if (email) {
-      window.localStorage.setItem('playerEmail', email);
-      console.log('E-Mail gespeichert:', email);
-    }
-    
     // Aktualisiere den Spielernamen in Supabase
     if (window.SupabaseService && window.SupabaseService.isSupabaseInitialized()) {
-      window.SupabaseService.saveHighScore(name, score, level, email)
+      window.SupabaseService.saveHighScore(name, score, level)
         .then(result => {
           console.log('Spielerinformationen aktualisiert:', result);
           // Nach dem Speichern die globalen Top-Scores abrufen
@@ -2486,10 +2463,6 @@ function showSuccessMessage() {
   if (playerNameInput) {
     playerNameInput.remove();
     playerNameInput = null;
-  }
-  if (playerEmailInput) {
-    playerEmailInput.remove();
-    playerEmailInput = null;
   }
   if (submitButton) {
     submitButton.remove();

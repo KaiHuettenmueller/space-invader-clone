@@ -209,10 +209,9 @@ async function fetchHighScoresWithProxy(limit = 10) {
  * @param {string} playerName - Name des Spielers
  * @param {number} score - Punktzahl
  * @param {number} level - Erreichtes Level
- * @param {string} email - E-Mail-Adresse des Spielers (optional)
  * @returns {Promise<Object>} - Ergebnis der Operation
  */
-async function saveHighScore(playerName, score, level, email) {
+async function saveHighScore(playerName, score, level) {
   if (!isInitialized) {
     const initResult = await initialize();
     if (!initResult) {
@@ -220,7 +219,7 @@ async function saveHighScore(playerName, score, level, email) {
     }
   }
   
-  console.log('Speichere Punktzahl in Supabase:', { playerName, score, level, email });
+  console.log('Speichere Punktzahl in Supabase:', { playerName, score, level });
   connectionStatus = "Speichere Punktzahl...";
   
   const scoreData = {
@@ -228,17 +227,6 @@ async function saveHighScore(playerName, score, level, email) {
     score: score,
     level: level
   };
-  
-  // Füge E-Mail hinzu, wenn vorhanden
-  if (email) {
-    scoreData.email = email;
-  } else {
-    // Versuche, die E-Mail aus dem lokalen Speicher zu holen
-    const storedEmail = window.localStorage.getItem('playerEmail');
-    if (storedEmail) {
-      scoreData.email = storedEmail;
-    }
-  }
   
   try {
     if (useProxy) {
@@ -262,9 +250,6 @@ async function saveHighScore(playerName, score, level, email) {
     if (error.message && error.message.includes('CORS')) {
       connectionStatus = "Versuche mit CORS-Proxy...";
       return await saveHighScoreWithProxy(scoreData);
-    } else if (error.message && (error.message.includes('level') || error.code === '42703')) {
-      // Versuche es ohne level-Feld, falls das der Fehler war
-      return await saveHighScoreWithoutLevel(playerName, score, scoreData.email);
     } else {
       connectionStatus = `Fehler beim Speichern: ${error.message}`;
       return { success: false, error };
@@ -305,7 +290,7 @@ async function saveHighScoreWithProxy(scoreData) {
     
     // Versuche es ohne level-Feld als Fallback
     if (error.message && (error.message.includes('level') || error.status === 400)) {
-      return await saveHighScoreWithoutLevel(scoreData.player_name, scoreData.score, scoreData.email);
+      return await saveHighScoreWithoutLevel(scoreData.player_name, scoreData.score, scoreData.level);
     }
     
     return { success: false, error };
@@ -316,10 +301,10 @@ async function saveHighScoreWithProxy(scoreData) {
  * Speichert einen Highscore ohne das Level-Feld
  * @param {string} playerName - Name des Spielers
  * @param {number} score - Punktzahl
- * @param {string} email - E-Mail-Adresse des Spielers (optional)
+ * @param {number} level - Erreichtes Level
  * @returns {Promise<Object>} - Ergebnis der Operation
  */
-async function saveHighScoreWithoutLevel(playerName, score, email) {
+async function saveHighScoreWithoutLevel(playerName, score, level) {
   console.log('Versuche Speichern ohne Level-Feld...');
   connectionStatus = "Versuche ohne Level-Feld...";
   
@@ -327,11 +312,6 @@ async function saveHighScoreWithoutLevel(playerName, score, email) {
     player_name: playerName,
     score: score
   };
-  
-  // Füge E-Mail hinzu, wenn vorhanden
-  if (email) {
-    simpleScoreData.email = email;
-  }
   
   try {
     if (useProxy) {
