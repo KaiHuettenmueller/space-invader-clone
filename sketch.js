@@ -31,6 +31,13 @@ const MAX_PARTICLES = 200;
 let stars = [];
 const NUM_STARS = 100;
 
+// Neue Variablen für das Leaderboard-Scrolling
+let leaderboardScrollY = 0;
+let maxLeaderboardScroll = 0;
+let isDragging = false;
+let dragStartY = 0;
+let dragStartScrollY = 0;
+
 class Player {
     constructor(x, y) {
       // Position (start at given coordinates)
@@ -1456,7 +1463,7 @@ function fetchGlobalHighScores() {
       return;
     }
     
-    window.SupabaseService.fetchHighScores(10)
+    window.SupabaseService.fetchHighScores(50) // Erhöhe das Limit auf 50 Einträge
       .then(result => {
         if (result.error) {
           throw result.error;
@@ -1466,6 +1473,11 @@ function fetchGlobalHighScores() {
           globalHighScores = result.data;
           console.log('Globale Highscores geladen:', globalHighScores);
           onlineLeaderboardStatus = "";
+          
+          // Berechne die maximale Scroll-Position basierend auf der Anzahl der Einträge
+          // Verwende die neue Höhe des sichtbaren Bereichs
+          const visibleAreaHeight = height * 2/3;
+          maxLeaderboardScroll = Math.max(0, (globalHighScores.length * 30) - visibleAreaHeight + 40);
         } else {
           console.log('Keine globalen Highscores gefunden');
           onlineLeaderboardStatus = "Keine Online-Scores gefunden";
@@ -1896,6 +1908,118 @@ function draw() {
   } else if (gameState === "GAMEOVER") {
     // Nur den Hintergrund zeichnen, der Rest wird vom Formular übernommen
     background(0);
+  } else if (gameState === "LEADERBOARD") {
+    // Statische Elemente des Leaderboards zeichnen
+    // Hintergrund verdunkeln
+    background(0, 0, 0, 200);
+    
+    // Leaderboard-Titel
+    fill(255);
+    textAlign(CENTER);
+    textSize(24);
+    text("LEADERBOARD", width / 2, height / 6 - 20); // Titel weiter nach oben verschieben
+    
+    // Wenn wir Daten haben, zeige sie an
+    if (globalHighScores && globalHighScores.length > 0) {
+      // Tabellenkopf
+      textSize(16);
+      textAlign(LEFT);
+      fill(200, 200, 200);
+      text("RANG", width / 4 - 40, height / 6 + 10); // Tabellenkopf weiter nach oben verschieben
+      text("NAME", width / 4 + 20, height / 6 + 10);
+      text("PUNKTE", width * 3 / 4 - 40, height / 6 + 10);
+      
+      // Trennlinie
+      stroke(100, 100, 100);
+      line(width / 4 - 60, height / 6 + 20, width * 3 / 4 + 40, height / 6 + 20);
+      noStroke();
+      
+      // Definiere den sichtbaren Bereich für die Einträge - größer machen
+      const visibleAreaY = height / 6 + 30; // Weiter nach oben verschieben
+      const visibleAreaHeight = height * 2/3; // Höher machen
+      
+      // Einträge anzeigen mit Clipping
+      push(); // Speichere den aktuellen Zustand
+      
+      
+      // Anstatt clip() zu verwenden, zeichnen wir nur Einträge, die im sichtbaren Bereich sind
+      
+      // Einträge anzeigen
+      textAlign(LEFT);
+      for (let i = 0; i < globalHighScores.length; i++) {
+        const entry = globalHighScores[i];
+        const y = visibleAreaY + 20 + i * 30 - leaderboardScrollY;
+        
+        // Nur zeichnen, wenn im sichtbaren Bereich
+        if (y > visibleAreaY - 30 && y < visibleAreaY + visibleAreaHeight + 30) {
+          // Hintergrund für abwechselnde Zeilen
+          if (i % 2 === 0) {
+            fill(30, 30, 30, 150);
+            rect(width / 4 - 60, y - 15, width / 2 + 100, 25, 5);
+          }
+          
+          // Hervorhebung für den aktuellen Spieler
+          const playerName = window.localStorage.getItem('playerName') || 'Anonymous';
+          if (entry.player_name === playerName) {
+            fill(60, 60, 120, 150);
+            rect(width / 4 - 60, y - 15, width / 2 + 100, 25, 5);
+          }
+          
+          // Rang
+          fill(255, 215, 0); // Gold
+          text(`#${i + 1}`, width / 4 - 40, y);
+          
+          // Name
+          fill(255);
+          text(entry.player_name, width / 4 + 20, y);
+          
+          // Punkte
+          fill(0, 255, 0);
+          text(entry.score, width * 3 / 4 - 40, y);
+        }
+      }
+      
+      pop(); // Stelle den vorherigen Zustand wieder her
+      
+      // Zeichne einen Rahmen um den sichtbaren Bereich
+      noFill();
+      stroke(100, 100, 100);
+      rect(width / 4 - 60, visibleAreaY, width / 2 + 100, visibleAreaHeight, 5);
+      noStroke();
+      
+      // Zeichne die Scrollbar
+      const scrollbarHeight = Math.min(visibleAreaHeight, (visibleAreaHeight * visibleAreaHeight) / (globalHighScores.length * 30));
+      const scrollbarY = visibleAreaY + (leaderboardScrollY / maxLeaderboardScroll) * (visibleAreaHeight - scrollbarHeight);
+      
+      // Scrollbar-Hintergrund
+      fill(50, 50, 50, 100);
+      rect(width * 3 / 4 + 50, visibleAreaY, 10, visibleAreaHeight, 5);
+      
+      // Scrollbar-Griff
+      fill(200, 200, 200, 150);
+      rect(width * 3 / 4 + 50, scrollbarY, 10, scrollbarHeight, 5);
+      
+      // Scrollhinweis - nach unten verschieben
+      fill(200, 200, 200);
+      textAlign(CENTER);
+      textSize(12);
+      text("Scrolle mit Mausrad oder ziehe", width / 2, height - 30);
+    } else {
+      // Keine Daten gefunden
+      textSize(16);
+      text("Keine Daten verfügbar", width / 2, height / 2);
+    }
+    
+    // Hinweis zum Zurückkehren - nach unten verschieben
+    fill(200, 200, 200);
+    textAlign(CENTER);
+    textSize(14);
+    text("Drücke ESC zum Zurückkehren", width / 2, height - 10);
+    
+    // Aktualisiere das Leaderboard alle 5 Sekunden
+    if (frameCount % 300 === 0) {
+      fetchLeaderboard();
+    }
   }
 }
 
@@ -1933,7 +2057,23 @@ function keyPressed() {
         });
     } else {
       console.error('Supabase-Service nicht verfügbar');
-      onlineLeaderboardStatus = "Supabase-Service nicht verfügbar";
+    }
+  }
+  
+  // Leaderboard mit 'L' anzeigen
+  if (key === 'l' || key === 'L') {
+    if (gameState === "PLAY") {
+      gameState = "LEADERBOARD";
+      fetchLeaderboard(); // Nur Daten laden, kein direktes Zeichnen mehr
+    }
+  }
+  
+  // ESC-Taste zum Zurückkehren vom Leaderboard
+  if (keyCode === ESCAPE) {
+    if (gameState === "LEADERBOARD") {
+      gameState = "PLAY";
+      // Stelle sicher, dass das Spiel korrekt fortgesetzt wird
+      loop();
     }
   }
 }
@@ -2255,7 +2395,7 @@ function createGameOverForm() {
   playAgainButton.parent(formContainer);
   
   // Leaderboards Button
-  const leaderboardsButton = createButton('LEADERBOARDS (Soon)');
+  const leaderboardsButton = createButton('LEADERBOARDS');
   leaderboardsButton.style('width', '100%');
   leaderboardsButton.style('padding', '12px');
   leaderboardsButton.style('background-color', 'white');
@@ -2266,12 +2406,16 @@ function createGameOverForm() {
   leaderboardsButton.style('font-weight', 'bold');
   leaderboardsButton.style('font-family', 'Arial, sans-serif');
   leaderboardsButton.style('letter-spacing', '1px');
-  leaderboardsButton.style('margin-bottom', '15px');
   leaderboardsButton.mouseOver(() => {
-    leaderboardsButton.style('background-color', '#EEEEEE');
+    leaderboardsButton.style('background-color', '#f0f0f0');
   });
   leaderboardsButton.mouseOut(() => {
     leaderboardsButton.style('background-color', 'white');
+  });
+  leaderboardsButton.mousePressed(() => {
+    removeGameOverForm();
+    gameState = "LEADERBOARD";
+    fetchLeaderboard(); // Nur Daten laden, kein direktes Zeichnen mehr
   });
   leaderboardsButton.parent(formContainer);
   
@@ -2493,5 +2637,93 @@ function drawStars() {
       star.x = random(width);
     }
   }
+}
+
+// Funktion zum Abrufen der Leaderboard-Daten aus Supabase
+async function fetchLeaderboard() {
+  console.log('Rufe Leaderboard-Daten ab...');
+  
+  // Wenn bereits globale Highscores geladen wurden, verwende diese
+  if (globalHighScores && globalHighScores.length > 0) {
+    console.log('Verwende bereits geladene Highscores:', globalHighScores);
+    return globalHighScores;
+  }
+  
+  // Ansonsten lade neue Daten
+  try {
+    if (typeof window.SupabaseService === 'undefined') {
+      console.error('Supabase-Service nicht verfügbar');
+      return [];
+    }
+    
+    // Verwende die bestehende Funktion zum Laden der Highscores
+    await fetchGlobalHighScores();
+    
+    // Warte kurz, bis die Daten geladen sind
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    // Gib die geladenen Daten zurück
+    return globalHighScores || [];
+  } catch (error) {
+    console.error("Fehler beim Abrufen des Leaderboards:", error);
+    return [];
+  }
+}
+
+// Füge Mausrad-Unterstützung für das Scrollen hinzu
+function mouseWheel(event) {
+  if (gameState === "LEADERBOARD") {
+    // Scrolle mit dem Mausrad
+    // In p5.js ist event.delta manchmal ein Objekt, daher müssen wir sicherstellen, dass wir den richtigen Wert verwenden
+    let deltaY = 0;
+    
+    if (typeof event.delta === 'number') {
+      deltaY = event.delta;
+    } else if (event.delta && typeof event.delta.y === 'number') {
+      deltaY = event.delta.y;
+    } else if (event.deltaY) {
+      deltaY = event.deltaY;
+    }
+    
+    leaderboardScrollY += deltaY * 0.5;
+    
+    // Begrenze den Scroll-Bereich
+    leaderboardScrollY = constrain(leaderboardScrollY, 0, maxLeaderboardScroll);
+    
+    // Verhindere das Standard-Scrollverhalten der Seite
+    return false;
+  }
+}
+
+// Füge Drag-Unterstützung für das Scrollen hinzu
+function mousePressed() {
+  // Prüfe zuerst, ob wir im Leaderboard sind
+  if (gameState === "LEADERBOARD") {
+    // Prüfe, ob der Klick auf der Scrollbar ist
+    const visibleAreaY = height / 4 + 20;
+    const visibleAreaHeight = height / 2 + 40;
+    
+    if (mouseX > width * 3 / 4 + 45 && mouseX < width * 3 / 4 + 65 &&
+        mouseY > visibleAreaY && mouseY < visibleAreaY + visibleAreaHeight) {
+      isDragging = true;
+      dragStartY = mouseY;
+      dragStartScrollY = leaderboardScrollY;
+    }
+  }
+}
+
+function mouseDragged() {
+  if (isDragging && gameState === "LEADERBOARD") {
+    // Berechne die neue Scroll-Position basierend auf der Mausbewegung
+    const visibleAreaHeight = height / 2 + 40;
+    const dragDelta = mouseY - dragStartY;
+    const scrollDelta = (dragDelta / visibleAreaHeight) * maxLeaderboardScroll;
+    
+    leaderboardScrollY = constrain(dragStartScrollY + scrollDelta, 0, maxLeaderboardScroll);
+  }
+}
+
+function mouseReleased() {
+  isDragging = false;
 }
   
