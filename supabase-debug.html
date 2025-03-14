@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Supabase Verbindungstest</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    button {
+      padding: 10px 15px;
+      background-color: #3ECF8E;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-right: 10px;
+      margin-bottom: 10px;
+    }
+    pre {
+      background-color: #f5f5f5;
+      padding: 15px;
+      border-radius: 4px;
+      overflow-x: auto;
+    }
+    .result {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Supabase Verbindungstest</h1>
+  
+  <p>Diese Seite hilft dir, die Verbindung zu deiner Supabase-Datenbank zu testen.</p>
+  
+  <div>
+    <h2>Supabase-Konfiguration</h2>
+    <p>Die Konfiguration ist bereits mit deinen Werten vorausgefüllt.</p>
+    
+    <div>
+      <label for="supabaseUrl">Supabase URL:</label><br>
+      <input type="text" id="supabaseUrl" style="width: 100%; margin-bottom: 10px; padding: 5px;" value="https://dwmchnkwymyyssldbcky.supabase.co">
+    </div>
+    
+    <div>
+      <label for="supabaseKey">Supabase Anon Key:</label><br>
+      <input type="text" id="supabaseKey" style="width: 100%; margin-bottom: 10px; padding: 5px;" value="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR3bWNobmt3eW15eXNzbGRiY2t5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE5NDk5MzYsImV4cCI6MjA1NzUyNTkzNn0.llOZSlp--MV5PhbkFGG2eVuO2eFUh5taKqibRpHzhVc">
+    </div>
+  </div>
+  
+  <div>
+    <h2>Tests ausführen</h2>
+    <button id="testConnectionBtn">Verbindung testen</button>
+    <button id="fetchHighscoresBtn">Highscores abrufen</button>
+    <button id="addTestScoreBtn">Test-Score hinzufügen</button>
+  </div>
+  
+  <div class="result">
+    <h2>Ergebnis:</h2>
+    <pre id="resultOutput">Noch kein Test ausgeführt.</pre>
+  </div>
+  
+  <div>
+    <h2>Browser-Informationen</h2>
+    <pre id="browserInfo"></pre>
+  </div>
+  
+  <script>
+    // Browser-Informationen anzeigen
+    document.getElementById('browserInfo').textContent = 
+      `User Agent: ${navigator.userAgent}\n` +
+      `Platform: ${navigator.platform}\n` +
+      `Cookies Enabled: ${navigator.cookieEnabled}\n` +
+      `Language: ${navigator.language}`;
+    
+    // Supabase-Client initialisieren
+    function initSupabase() {
+      const supabaseUrl = document.getElementById('supabaseUrl').value.trim();
+      const supabaseKey = document.getElementById('supabaseKey').value.trim();
+      
+      if (!supabaseUrl || !supabaseKey) {
+        return { error: 'URL oder Key fehlt' };
+      }
+      
+      try {
+        // Erweiterte Optionen für den Supabase-Client
+        const options = {
+          auth: {
+            autoRefreshToken: true,
+            persistSession: true
+          },
+          global: {
+            headers: {
+              'X-Client-Info': 'supabase-debug-tool'
+            }
+          }
+        };
+        
+        return { client: supabase.createClient(supabaseUrl, supabaseKey, options) };
+      } catch (error) {
+        return { error: error.message };
+      }
+    }
+    
+    // Verbindung testen
+    document.getElementById('testConnectionBtn').addEventListener('click', async function() {
+      const result = initSupabase();
+      
+      if (result.error) {
+        document.getElementById('resultOutput').textContent = `Fehler bei der Initialisierung: ${result.error}`;
+        return;
+      }
+      
+      try {
+        const { data, error } = await result.client
+          .from('leaderboard')
+          .select('count', { count: 'exact', head: true });
+        
+        if (error) throw error;
+        
+        document.getElementById('resultOutput').textContent = 'Verbindung erfolgreich hergestellt!\n\n' + JSON.stringify(data, null, 2);
+      } catch (error) {
+        document.getElementById('resultOutput').textContent = `Fehler bei der Verbindung: ${error.message}`;
+        console.error(error);
+      }
+    });
+    
+    // Highscores abrufen
+    document.getElementById('fetchHighscoresBtn').addEventListener('click', async function() {
+      const result = initSupabase();
+      
+      if (result.error) {
+        document.getElementById('resultOutput').textContent = `Fehler bei der Initialisierung: ${result.error}`;
+        return;
+      }
+      
+      try {
+        const { data, error } = await result.client
+          .from('leaderboard')
+          .select('*')
+          .order('score', { ascending: false })
+          .limit(10);
+        
+        if (error) throw error;
+        
+        document.getElementById('resultOutput').textContent = 'Highscores erfolgreich abgerufen!\n\n' + JSON.stringify(data, null, 2);
+      } catch (error) {
+        document.getElementById('resultOutput').textContent = `Fehler beim Abrufen der Highscores: ${error.message}`;
+        console.error(error);
+      }
+    });
+    
+    // Test-Score hinzufügen
+    document.getElementById('addTestScoreBtn').addEventListener('click', async function() {
+      const result = initSupabase();
+      
+      if (result.error) {
+        document.getElementById('resultOutput').textContent = `Fehler bei der Initialisierung: ${result.error}`;
+        return;
+      }
+      
+      try {
+        const testScore = {
+          player_name: 'Test-Spieler',
+          score: Math.floor(Math.random() * 1000) + 1,
+          level: Math.floor(Math.random() * 5) + 1
+        };
+        
+        const { data, error } = await result.client
+          .from('leaderboard')
+          .insert([testScore]);
+        
+        if (error) throw error;
+        
+        document.getElementById('resultOutput').textContent = 'Test-Score erfolgreich hinzugefügt!\n\n' + JSON.stringify(testScore, null, 2);
+      } catch (error) {
+        document.getElementById('resultOutput').textContent = `Fehler beim Hinzufügen des Test-Scores: ${error.message}`;
+        console.error(error);
+      }
+    });
+  </script>
+</body>
+</html> 

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Supabase CORS-Einstellungen aktualisieren</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    button {
+      padding: 10px 15px;
+      background-color: #3ECF8E;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    pre {
+      background-color: #f5f5f5;
+      padding: 15px;
+      border-radius: 4px;
+      overflow-x: auto;
+    }
+    .result {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Supabase CORS-Einstellungen aktualisieren</h1>
+  
+  <p>Diese Seite hilft dir, die CORS-Einstellungen für dein Supabase-Projekt zu aktualisieren.</p>
+  
+  <div>
+    <h2>Schritt 1: Gib deine Supabase-Anmeldedaten ein</h2>
+    <p>Du benötigst deine Supabase-URL und deinen API-Schlüssel (service_role key, nicht den anon key).</p>
+    
+    <div>
+      <label for="projectRef">Projekt-Referenz (aus der URL, z.B. "dwmchnkwymyyssldbcky"):</label><br>
+      <input type="text" id="projectRef" style="width: 100%; margin-bottom: 10px; padding: 5px;" value="dwmchnkwymyyssldbcky">
+    </div>
+    
+    <div>
+      <label for="serviceKey">Service Role Key (aus den API-Einstellungen):</label><br>
+      <input type="text" id="serviceKey" style="width: 100%; margin-bottom: 10px; padding: 5px;" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...">
+    </div>
+  </div>
+  
+  <div>
+    <h2>Schritt 2: Gib die GitHub Pages-URL ein</h2>
+    <p>Die URL deiner GitHub Pages-Website, die Zugriff auf Supabase haben soll.</p>
+    
+    <div>
+      <label for="githubPagesUrl">GitHub Pages-URL:</label><br>
+      <input type="text" id="githubPagesUrl" style="width: 100%; margin-bottom: 10px; padding: 5px;" value="https://kaihuettenmueller.github.io">
+    </div>
+  </div>
+  
+  <div>
+    <h2>Schritt 3: CORS-Einstellungen aktualisieren</h2>
+    <button id="updateCorsBtn">CORS-Einstellungen aktualisieren</button>
+  </div>
+  
+  <div class="result">
+    <h2>Ergebnis:</h2>
+    <pre id="resultOutput">Noch keine Aktion ausgeführt.</pre>
+  </div>
+  
+  <script>
+    document.getElementById('updateCorsBtn').addEventListener('click', async function() {
+      const projectRef = document.getElementById('projectRef').value.trim();
+      const serviceKey = document.getElementById('serviceKey').value.trim();
+      const githubPagesUrl = document.getElementById('githubPagesUrl').value.trim();
+      
+      if (!projectRef || !serviceKey || !githubPagesUrl) {
+        document.getElementById('resultOutput').textContent = 'Bitte fülle alle Felder aus.';
+        return;
+      }
+      
+      try {
+        // Aktuelle Konfiguration abrufen
+        const configResponse = await fetch(`https://${projectRef}.supabase.co/rest/v1/`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${serviceKey}`,
+            'apikey': serviceKey
+          }
+        });
+        
+        if (!configResponse.ok) {
+          throw new Error(`Fehler beim Abrufen der Konfiguration: ${configResponse.status} ${configResponse.statusText}`);
+        }
+        
+        // CORS-Einstellungen aktualisieren
+        const corsUrl = `https://${projectRef}.supabase.co/auth/v1/config`;
+        const corsData = {
+          SITE_URL: githubPagesUrl,
+          ADDITIONAL_REDIRECT_URLS: `${githubPagesUrl},http://localhost:3000,http://localhost:8000`,
+          ALLOWED_ORIGINS: `${githubPagesUrl},http://localhost:3000,http://localhost:8000,https://kaihuettenmueller.github.io/space-invader-clone/`
+        };
+        
+        const corsResponse = await fetch(corsUrl, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${serviceKey}`,
+            'apikey': serviceKey
+          },
+          body: JSON.stringify(corsData)
+        });
+        
+        if (!corsResponse.ok) {
+          const errorText = await corsResponse.text();
+          throw new Error(`Fehler beim Aktualisieren der CORS-Einstellungen: ${corsResponse.status} ${corsResponse.statusText}\n${errorText}`);
+        }
+        
+        const result = await corsResponse.json();
+        document.getElementById('resultOutput').textContent = 'CORS-Einstellungen erfolgreich aktualisiert!\n\n' + JSON.stringify(result, null, 2);
+      } catch (error) {
+        document.getElementById('resultOutput').textContent = `Fehler: ${error.message}`;
+        console.error(error);
+      }
+    });
+  </script>
+</body>
+</html> 
