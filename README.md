@@ -27,7 +27,7 @@ Dieses Projekt ist ein moderner Klon des klassischen Arcade-Spiels Space Invader
 
 ```
 # Klone das Repository
-git clone https://github.com/dein-username/space-invader-clone.git
+git clone https://github.com/KaiHuettenmueller/space-invader-clone.git
 
 # Wechsle in das Projektverzeichnis
 cd space-invader-clone
